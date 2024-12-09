@@ -25,25 +25,29 @@ export function createTransformer<T = any>(transform?: (doc: HydratedDocument<T>
 }
 
 /**
- * Paginate using a typegoose model using a simple where query and pagination params
- * @param model Typegoose model
+ * Paginate using a Mongoose model using a simple where query and pagination params
+ * @param model Mongoose model
  * @param where Simple query to filter the results
  * @param params Pagination params
  */
-export function paginate<TRD>(model: Model<TRD>, where: FilterQuery<HydratedDocument<TRD>>, params: IPaginationParams): Promise<IPagination<HydratedDocument<TRD>>> {
-    return model.countDocuments(where).then(count => {
-        let query: Query<any, any> = model.find(where);
-        if (isString(params.sort) && params.sort) {
-            query = query.sort(params.sort);
-        }
-        if (Array.isArray(params.populate)) {
-            params.populate.forEach(field => {
-                query = query.populate(field);
-            });
-        }
-        return (params.limit > 0 ? query.skip(params.page * params.limit).limit(params.limit) : query).then(items => {
-            const meta = {total: count};
-            return {count, items, meta};
+export async function paginate<TRD>(model: Model<TRD>, where: FilterQuery<HydratedDocument<TRD>>, params: IPaginationParams<TRD>): Promise<IPagination<HydratedDocument<TRD>>> {
+    const count = await model.countDocuments(where);
+    let query: Query<any, any> = model.find(where);
+    if (isString(params.sort) && params.sort) {
+        query = query.sort(params.sort);
+    }
+    if (Array.isArray(params.populate)) {
+        params.populate.forEach(field => {
+            query = query.populate(field);
         });
-    });
+    }
+    if (params.limit > 0) {
+        query = query.skip(params.page * params.limit).limit(params.limit);
+    }
+    const items = await query;
+    return {
+        count,
+        items,
+        meta: {total: count}
+    };
 }

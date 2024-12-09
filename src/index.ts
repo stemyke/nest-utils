@@ -4,6 +4,8 @@ export * from './lib/utils';
 
 export {
     InferGeneric,
+    KeysOfType,
+    OnlyOfType,
     IPaginationParams,
     IPaginationMeta,
     IPagination

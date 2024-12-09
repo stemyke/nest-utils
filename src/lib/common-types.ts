@@ -1,12 +1,21 @@
 import { Type } from '@nestjs/common';
+import { Types } from 'mongoose';
 
 export type InferGeneric<T> = T extends Type<infer B> ? B : never;
 
-export interface IPaginationParams {
+export type KeysOfType<T, W> = {
+    [K in keyof T]: (K extends string ? (T[K] extends W ? K : never) : never);
+}[keyof T];
+
+export type OnlyOfType<T, W> = {
+    [K in KeysOfType<T, K>]: T[K];
+};
+
+export interface IPaginationParams<T> {
     page: number;
     limit: number;
     sort?: string;
-    populate?: string[];
+    populate?: Array<KeysOfType<T, Types.ObjectId>>;
     [key: string]: any;
 }
 
