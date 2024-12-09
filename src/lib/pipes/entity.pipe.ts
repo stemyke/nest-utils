@@ -22,16 +22,20 @@ export class EntityPipe implements PipeTransform<HydratedDocument<any>> {
     }
 
     async transform({ type, throwError, ctx }: EntityContext, metadata: ArgumentMetadata) {
-        const req = ctx.switchToHttp().getRequest();
-        const id = req.params[`${type.name}Id`] || req.params.id;
-        if (!isValidObjectId(id)) {
-            throw new BadRequestException(`Invalid id provided for resolving ${type.name} entity: ${id}`);
-        }
         let model: Model<any> = null;
         try {
             model = this.connection.model(type.name);
         } catch (e) {
             throw new NotFoundException(`Model does not exists for type: ${type.name} ${e.message}`);
+        }
+        const req = ctx.switchToHttp().getRequest();
+        const name = type.name.charAt(0).toLowerCase() + type.name.substring(1);
+        const id = req.params[`${name}Id`] || req.params.id;
+        if (!isValidObjectId(id)) {
+            if (throwError) {
+                throw new BadRequestException(`Invalid id provided for resolving ${type.name} entity: ${id}`);
+            }
+            return null;
         }
         const doc = model.findById(id);
         if (!doc) {
