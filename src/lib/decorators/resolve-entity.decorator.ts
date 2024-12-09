@@ -8,6 +8,6 @@ const ResEntity = createParamDecorator(
     }
 );
 
-export function ResolveEntity(type: Type, throwError: boolean = true) {
-    return ResEntity({type, throwError}, EntityPipe);
+export function ResolveEntity(type: Type, throwError: boolean = true, idField: string = 'id') {
+    return ResEntity({type, throwError, idField}, EntityPipe);
 }

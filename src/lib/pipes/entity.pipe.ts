@@ -13,6 +13,7 @@ import { InjectConnection } from '@nestjs/mongoose';
 export interface EntityContext {
     type: Type;
     throwError: boolean;
+    idField: string;
     ctx?: ExecutionContext;
 }
 
@@ -21,7 +22,7 @@ export class EntityPipe implements PipeTransform<HydratedDocument<any>> {
     constructor(@InjectConnection() protected connection: Connection) {
     }
 
-    async transform({ type, throwError, ctx }: EntityContext, metadata: ArgumentMetadata) {
+    async transform({ type, throwError, idField, ctx }: EntityContext, metadata: ArgumentMetadata) {
         let model: Model<any> = null;
         try {
             model = this.connection.model(type.name);
@@ -30,7 +31,7 @@ export class EntityPipe implements PipeTransform<HydratedDocument<any>> {
         }
         const req = ctx.switchToHttp().getRequest();
         const name = type.name.charAt(0).toLowerCase() + type.name.substring(1);
-        const id = req.params[`${name}Id`] || req.params.id;
+        const id = req.params[idField] || req.params[`${name}Id`];
         if (!isValidObjectId(id)) {
             if (throwError) {
                 throw new BadRequestException(`Invalid id provided for resolving ${type.name} entity: ${id}`);
