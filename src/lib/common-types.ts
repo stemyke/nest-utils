@@ -1,6 +1,6 @@
 import { Type } from '@nestjs/common';
 import { Types } from 'mongoose';
-import { Readable } from 'stream';
+import { Readable, Writable } from 'stream';
 
 export type InferGeneric<T> = T extends Type<infer B> ? B : never;
 
@@ -85,6 +85,23 @@ export interface IAsset {
     save(): Promise<any>;
     load(): Promise<this>;
     toJSON(): any;
+}
+
+export interface IAssetUploadStream extends Writable {
+    id?: Types.ObjectId;
+    done?: boolean;
+}
+
+export interface IAssetUploadOpts {
+    chunkSizeBytes?: number;
+    metadata?: IAssetMeta;
+}
+
+export interface IAssetDriver {
+    readonly metaCollection: string;
+    openUploadStream(filename: string, opts?: IAssetUploadOpts): IAssetUploadStream;
+    openDownloadStream(id: Types.ObjectId): Readable;
+    delete(id: Types.ObjectId): Promise<void>;
 }
 
 export interface IFileType {

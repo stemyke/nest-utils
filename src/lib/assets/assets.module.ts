@@ -1,9 +1,11 @@
 import {Module} from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
 import {AssetsController} from './assets.controller';
 import {AssetsService} from "./assets.service";
 import { AssetResolverService } from './asset-resolver.service';
 
 @Module({
+    imports: [MongooseModule.forFeature()],
     controllers: [AssetsController],
     providers: [AssetsService, AssetResolverService],
     exports: [AssetsService, AssetResolverService]

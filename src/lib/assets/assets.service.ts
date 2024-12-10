@@ -1,26 +1,26 @@
 import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Readable } from 'stream';
-import type { GridFSBucket, ObjectId, Filter, Collection } from 'mongodb';
-import { GridFSBucket as BucketImpl } from 'mongodb/lib/gridfs';
+import type { ObjectId, Filter, Collection } from 'mongodb';
 import { Connection, Types } from 'mongoose';
 
-import { IAsset, IAssetMeta, IFileType } from '../common-types';
+import { IAsset, IAssetDriver, IAssetMeta, IFileType } from '../common-types';
 import { copyStream, streamToBuffer, fileTypeFromBuffer, bufferToStream, fetchBuffer } from '../utils';
 import { Asset } from '../entities/asset';
 import { TempAsset } from '../entities/temp-asset';
+import { AssetLocalDriver } from './asset-local.driver';
 
 export type PartialAsset = Partial<IAsset>;
 
 @Injectable()
 export class AssetsService {
 
-    readonly bucket: GridFSBucket;
+    readonly driver: IAssetDriver;
     readonly collection: Collection<PartialAsset>;
 
     constructor(@InjectConnection() connection: Connection) {
-        this.bucket = new BucketImpl(connection.db, {bucketName: 'assets'});
-        this.collection = connection.db.collection('assets');
+        this.driver = new AssetLocalDriver("asset_files");
+        this.collection = connection.db.collection(this.driver.metaCollection);
     }
 
     async write(stream: Readable, contentType: string = null, metadata: IAssetMeta = null): Promise<IAsset> {
@@ -41,15 +41,18 @@ export class AssetsService {
 
     async writeBuffer(buffer: Buffer, metadata: IAssetMeta = null, contentType: string = null): Promise<IAsset> {
         let fileType = {ext: '', mime: contentType} as IFileType;
+        console.log('writebuffer', metadata);
         try {
             fileType = await fileTypeFromBuffer(buffer);
         } catch (e) {
+            console.log('so??', e, metadata);
             if (!fileType.mime) {
-                throw `Can't determine mime type`;
+                throw new Error(`Can't determine mime type`);
             }
             console.log(`Can't determine mime type`, e);
         }
         metadata = metadata || {};
+        console.log('upload...', metadata);
         // buffer = await this.assetProcessor.process(buffer, metadata, fileType);
         return this.upload(bufferToStream(buffer), fileType, metadata);
     }
@@ -91,7 +94,7 @@ export class AssetsService {
 
     async find(where: Filter<PartialAsset>): Promise<IAsset> {
         const data = await this.collection.findOne(where);
-        return !data ? null : new Asset(data._id, data, this.collection, this.bucket);
+        return !data ? null : new Asset(data._id, data, this.collection, this.driver);
     }
 
     async findMany(where: Filter<IAsset>): Promise<ReadonlyArray<IAsset>> {
@@ -100,7 +103,7 @@ export class AssetsService {
         const result: IAsset[] = [];
         for (let item of items) {
             if (!item) continue;
-            result.push(new Asset(item._id, item, this.collection, this.bucket));
+            result.push(new Asset(item._id, item, this.collection, this.driver));
         }
         return result;
     }
@@ -125,24 +128,41 @@ export class AssetsService {
         }, metadata || {});
         metadata.filename = metadata.filename || new Types.ObjectId().toHexString();
         metadata.extension = (fileType.ext || '').trim();
-        return new Promise<IAsset>(((resolve, reject) => {
-            const uploaderStream = this.bucket.openUploadStream(metadata.filename);
-            stream.pipe(uploaderStream)
-                .on('error', error => {
-                    reject(error.message || error);
-                })
-                .on('finish', () => {
-                    const asset = new Asset(uploaderStream.id as ObjectId, {
-                        filename: metadata.filename,
-                        contentType,
-                        metadata
-                    }, this.collection, this.bucket);
-                    asset.save().then(() => {
-                        resolve(asset);
-                    }, error => {
-                        reject(error.message || error);
-                    });
+        console.log(metadata, '???');
+        return new Promise<IAsset>((resolve, reject) => {
+            try {
+                const uploaderStream = this.driver.openUploadStream(metadata.filename, {
+                    chunkSizeBytes: 1048576,
+                    metadata
                 });
-        }));
+                copyStream(stream).on('data', data => {
+                    console.log('dadadad', data);
+                });
+                copyStream(stream).pipe(uploaderStream)
+                    .on('error', error => {
+                        console.log('Error?');
+                        reject(error.message || error);
+                    })
+                    .on('finish', () => {
+                        console.log('Finish?');
+                        try {
+                            const asset = new Asset(uploaderStream.id as ObjectId, {
+                                filename: metadata.filename,
+                                contentType,
+                                metadata
+                            }, this.collection, this.driver);
+                            asset.save().then(() => {
+                                resolve(asset);
+                            }, error => {
+                                reject(error.message || error);
+                            });
+                        } catch (e) {
+                            reject(e);
+                        }
+                    });
+            } catch (e) {
+                reject(e);
+            }
+        });
     }
 }

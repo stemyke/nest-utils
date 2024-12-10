@@ -14,7 +14,7 @@ export class BaseEntity<T> {
     }
 
     save(): Promise<any> {
-        return this.collection.updateOne({_id: this.mId}, {$set: this.toJSON()});
+        return this.collection.updateOne({_id: this.mId}, {$set: this.toJSON()}, {upsert: true});
     }
 
     async load(): Promise<this> {

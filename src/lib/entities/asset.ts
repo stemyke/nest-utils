@@ -1,7 +1,7 @@
 import {Readable} from 'stream';
 import type {Collection, ObjectId, GridFSBucket} from 'mongodb';
 
-import {IAsset, IAssetImageParams, IAssetMeta} from '../common-types';
+import { IAsset, IAssetDriver, IAssetImageParams, IAssetMeta } from '../common-types';
 import {deleteFromBucket, streamToBuffer, toImage} from '../utils';
 import {BaseEntity} from './base-entity';
 
@@ -20,18 +20,18 @@ export class Asset extends BaseEntity<IAsset> implements IAsset {
     }
 
     get stream(): Readable {
-        return this.bucket.openDownloadStream(this.mId);
+        return this.driver.openDownloadStream(this.mId);
     }
 
     constructor(id: ObjectId,
                 data: Partial<IAsset>,
                 collection: Collection,
-                protected bucket: GridFSBucket) {
+                protected driver: IAssetDriver) {
         super(id, data, collection);
     }
 
     async unlink(): Promise<string> {
-        return deleteFromBucket(this.bucket, this.mId);
+        return deleteFromBucket(this.driver, this.mId);
     }
 
     async setMeta(metadata: Partial<IAssetMeta>): Promise<any> {

@@ -39,9 +39,7 @@ export async function fetchBuffer(url: string): Promise<Buffer> {
 }
 
 export function bufferToStream(buffer: Buffer): Readable {
-    const readStream = new PassThrough();
-    readStream.end(buffer);
-    return readStream
+    return Readable.from(buffer);
 }
 
 export function streamToBuffer(stream: Readable): Promise<Buffer> {
