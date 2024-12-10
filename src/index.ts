@@ -14,5 +14,6 @@ export {
     IAssetMeta,
     IAssetImageParams,
     IAsset,
-    IFileType
+    IFileType,
+    IUploadedFile
 } from './lib/common-types';

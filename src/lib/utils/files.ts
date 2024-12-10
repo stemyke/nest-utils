@@ -1,6 +1,6 @@
 import { PassThrough, Readable, ReadableOptions } from 'stream';
-import { fileTypeFromBuffer as typeFromBuffer } from 'file-type/core';
-import fetch from 'node-fetch';
+import Mimetics from 'mimetics';
+import fetch from 'node-fetch-cjs';
 import { IAssetCropInfo, IAssetImageParams, IAssetMeta, IFileType } from '../common-types';
 import { isBoolean, isInterface, isString } from './misc';
 import sharp_ from 'sharp';
@@ -68,7 +68,8 @@ function fixTextFileType(type: IFileType, buffer: Buffer): IFileType {
 }
 
 export async function fileTypeFromBuffer(buffer: Buffer): Promise<IFileType> {
-    const type = (await typeFromBuffer(buffer) ?? {ext: 'txt', mime: 'text/plain'}) as IFileType;
+    const mimetics = new Mimetics();
+    const type: IFileType = (await mimetics.parseAsync(buffer)) ?? {ext: 'txt', mime: 'text/plain'};
     if (checkTextFileType(type)) {
         return fixTextFileType(type, buffer);
     }
