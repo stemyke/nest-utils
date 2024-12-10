@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {IAsset} from '../common-types';
+import {IAsset} from './common';
 import {AssetsService} from './assets.service';
 
 @Injectable()

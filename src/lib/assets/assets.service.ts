@@ -1,25 +1,26 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Readable } from 'stream';
-import type { ObjectId, Filter, Collection } from 'mongodb';
+import type { Collection, Filter, ObjectId } from 'mongodb';
 import { Connection, Types } from 'mongoose';
 
-import { IAsset, IAssetDriver, IAssetMeta, IFileType } from '../common-types';
-import { copyStream, streamToBuffer, fileTypeFromBuffer, bufferToStream, fetchBuffer } from '../utils';
-import { Asset } from '../entities/asset';
-import { TempAsset } from '../entities/temp-asset';
-import { AssetLocalDriver } from './asset-local.driver';
+import { IFileType } from '../common-types';
+import { bufferToStream, copyStream, fetchBuffer, fileTypeFromBuffer, streamToBuffer } from '../utils';
+
+import { ASSET_DRIVER, IAsset, IAssetDriver, IAssetMeta } from './common';
+import { Asset, TempAsset } from './entities';
+import { AssetProcessorService } from './asset-processor.service';
 
 export type PartialAsset = Partial<IAsset>;
 
 @Injectable()
 export class AssetsService {
 
-    readonly driver: IAssetDriver;
     readonly collection: Collection<PartialAsset>;
 
-    constructor(@InjectConnection() connection: Connection) {
-        this.driver = new AssetLocalDriver("asset_files");
+    constructor(@InjectConnection() connection: Connection,
+                @Inject(ASSET_DRIVER) readonly driver: IAssetDriver,
+                readonly assetProcessor: AssetProcessorService) {
         this.collection = connection.db.collection(this.driver.metaCollection);
     }
 
@@ -50,7 +51,7 @@ export class AssetsService {
             console.log(`Can't determine mime type`, e);
         }
         metadata = metadata || {};
-        // buffer = await this.assetProcessor.process(buffer, metadata, fileType);
+        buffer = await this.assetProcessor.process(buffer, metadata, fileType);
         return this.upload(bufferToStream(buffer), fileType, metadata);
     }
 
@@ -81,7 +82,7 @@ export class AssetsService {
             filename: url,
             extension: (fileType.ext || '').trim()
         };
-        // buffer = await this.assetProcessor.process(buffer, metadata, fileType);
+        buffer = await this.assetProcessor.process(buffer, metadata, fileType);
         return new TempAsset(buffer, url, fileType.mime, metadata);
     }
 

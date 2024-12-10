@@ -16,9 +16,9 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { Readable } from 'stream';
 import { isValidObjectId } from 'mongoose';
 
-import { IAsset, IUploadedFile } from '../common-types';
 import { Public } from '../decorators';
 
+import { IAsset, IUploadedFile } from './common';
 import { AssetImageParams } from './asset-image-params';
 import { AssetsService } from './assets.service';
 import { AssetResolverService } from './asset-resolver.service';

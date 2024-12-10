@@ -1,10 +1,12 @@
-import {Readable} from 'stream';
-import {Types} from 'mongoose';
-import {IAsset, IAssetImageParams, IAssetMeta} from '../common-types';
-import {bufferToStream, toImage} from '../utils';
+import { Readable } from 'stream';
+import { Types } from 'mongoose';
+import { IImageParams } from '../../common-types';
+import { bufferToStream, toImage } from '../../utils';
+import { IAsset, IAssetMeta } from '../common';
 
 export class TempAsset implements IAsset {
 
+    readonly oid: Types.ObjectId;
     readonly id: string;
 
     get stream(): Readable {
@@ -12,7 +14,8 @@ export class TempAsset implements IAsset {
     }
 
     constructor(protected buffer: Buffer, readonly filename: string, readonly contentType: string, readonly metadata: IAssetMeta) {
-        this.id = new Types.ObjectId().toHexString();
+        this.oid = new Types.ObjectId();
+        this.id = this.oid.toHexString();
     }
 
     async unlink(): Promise<string> {
@@ -31,12 +34,12 @@ export class TempAsset implements IAsset {
         return this.stream;
     }
 
-    downloadImage(params?: IAssetImageParams, metadata?: IAssetMeta): Promise<Readable> {
+    downloadImage(params?: IImageParams, metadata?: IAssetMeta): Promise<Readable> {
         Object.assign(this.metadata, metadata || {});
         return toImage(this.stream, params, this.metadata);
     }
 
-    getImage(params?: IAssetImageParams): Promise<Readable> {
+    getImage(params?: IImageParams): Promise<Readable> {
         return this.downloadImage(params);
     }
 

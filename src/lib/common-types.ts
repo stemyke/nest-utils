@@ -35,29 +35,23 @@ export interface IPagination<T = any> {
 
 // --- Assets ---
 
-export interface IAssetCropInfo {
+export interface IImageCropInfo {
     x: number;
     y: number;
     w: number;
     h: number;
 }
 
-export interface IAssetMeta {
-    filename?: string;
+export interface IImageMeta {
     extension?: string;
-    classified?: boolean;
-    downloadCount?: number;
-    firstDownload?: Date;
-    lastDownload?: Date;
-    crop?: IAssetCropInfo;
-    cropBefore?: IAssetCropInfo;
-    cropAfter?: IAssetCropInfo;
+    crop?: IImageCropInfo;
+    cropBefore?: IImageCropInfo;
+    cropAfter?: IImageCropInfo;
     canvasScaleX?: number;
     canvasScaleY?: number;
-    [prop: string]: any;
 }
 
-export interface IAssetImageParams {
+export interface IImageParams {
     rotation?: number;
     canvasScaleX?: number;
     canvasScaleY?: number;
@@ -65,43 +59,9 @@ export interface IAssetImageParams {
     scaleY?: number;
     lazy?: boolean;
     crop?: string | boolean;
-    cropBefore?: string | boolean | IAssetCropInfo;
-    cropAfter?: string | boolean | IAssetCropInfo;
+    cropBefore?: string | boolean | IImageCropInfo;
+    cropAfter?: string | boolean | IImageCropInfo;
     [key: string]: any;
-}
-
-export interface IAsset {
-    readonly id: string;
-    readonly filename: string;
-    readonly contentType: string;
-    readonly metadata: IAssetMeta;
-    readonly stream: Readable;
-    unlink(): Promise<string>;
-    setMeta(meta: Partial<IAssetMeta>): Promise<any>;
-    getBuffer(): Promise<Buffer>;
-    download(metadata?: IAssetMeta): Promise<Readable>;
-    downloadImage(params?: IAssetImageParams, metadata?: IAssetMeta): Promise<Readable>;
-    getImage(params?: IAssetImageParams): Promise<Readable>;
-    save(): Promise<any>;
-    load(): Promise<this>;
-    toJSON(): any;
-}
-
-export interface IAssetUploadStream extends Writable {
-    id?: Types.ObjectId;
-    done?: boolean;
-}
-
-export interface IAssetUploadOpts {
-    chunkSizeBytes?: number;
-    metadata?: IAssetMeta;
-}
-
-export interface IAssetDriver {
-    readonly metaCollection: string;
-    openUploadStream(filename: string, opts?: IAssetUploadOpts): IAssetUploadStream;
-    openDownloadStream(id: Types.ObjectId): Readable;
-    delete(id: Types.ObjectId): Promise<void>;
 }
 
 export interface IFileType {
@@ -109,32 +69,4 @@ export interface IFileType {
     mime: string;
 }
 
-export interface IUploadedFile {
-    /** Name of the form field associated with this file. */
-    fieldname: string;
-    /** Name of the file on the uploader's computer. */
-    originalname: string;
-    /**
-     * Value of the `Content-Transfer-Encoding` header for this file.
-     * @deprecated since July 2015
-     * @see RFC 7578, Section 4.7
-     */
-    encoding: string;
-    /** Value of the `Content-Type` header for this file. */
-    mimetype: string;
-    /** Size of the file in bytes. */
-    size: number;
-    /**
-     * A readable stream of this file. Only available to the `_handleFile`
-     * callback for custom `StorageEngine`s.
-     */
-    stream: Readable;
-    /** `DiskStorage` only: Directory to which this file has been uploaded. */
-    destination: string;
-    /** `DiskStorage` only: Name of this file within `destination`. */
-    filename: string;
-    /** `DiskStorage` only: Full path to the uploaded file. */
-    path: string;
-    /** `MemoryStorage` only: A Buffer containing the entire file. */
-    buffer: Buffer;
-}
+export type FontFormat = "opentype" | "truetype" | "woff" | "woff2" | "datafork";

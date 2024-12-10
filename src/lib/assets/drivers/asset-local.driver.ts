@@ -1,17 +1,21 @@
 import { createReadStream, createWriteStream, mkdirSync } from 'fs';
-import { rm } from 'fs/promises';
+import { rm, writeFile } from 'fs/promises';
 import { Types } from 'mongoose';
-import { IAssetDriver, IAssetUploadOpts, IAssetUploadStream } from '../common-types';
-import { Readable } from 'stream';
+import { Inject, Injectable } from '@nestjs/common';
 
+import { IAssetDriver, IAssetUploadOpts, IAssetUploadStream, LOCAL_DIR } from '../common';
+
+@Injectable({
+
+})
 export class AssetLocalDriver implements IAssetDriver {
     readonly metaCollection: string;
 
-    constructor(protected dir: string) {
+    constructor(@Inject(LOCAL_DIR) protected dir: string) {
         this.metaCollection = "assets.local";
     }
 
-    openUploadStream(filename: string, opts?: IAssetUploadOpts): IAssetUploadStream {
+    openUploadStream(filename: string, opts?: IAssetUploadOpts) {
         const id = new Types.ObjectId();
         const dir = `${this.dir}/${id.toHexString()}`;
         mkdirSync(dir, { recursive: true });
@@ -19,16 +23,18 @@ export class AssetLocalDriver implements IAssetDriver {
         stream.id = id;
         stream.done = false;
         stream.on('finish', () => {
+            writeFile(`${dir}/filename.txt`, filename);
+            writeFile(`${dir}/metadata.json`, JSON.stringify(opts?.metadata || {}));
             stream.done = true;
         });
         return stream;
     }
 
-    openDownloadStream(id: Types.ObjectId): Readable {
+    openDownloadStream(id: Types.ObjectId) {
         return createReadStream(`${this.dir}/${id.toHexString()}/file.bin`, {autoClose: true, emitClose: true});
     }
 
-    delete(id: Types.ObjectId): Promise<void> {
+    delete(id: Types.ObjectId) {
         return rm(`${this.dir}/${id.toHexString()}`, { recursive: true, force: true });
     }
 }

@@ -1,7 +1,7 @@
 import { PassThrough, Readable, ReadableOptions } from 'stream';
 import Mimetics from 'mimetics';
 import fetch from 'node-fetch-cjs';
-import { IAssetCropInfo, IAssetImageParams, IAssetMeta, IFileType } from '../common-types';
+import { IImageCropInfo, IImageParams, IFileType, IImageMeta } from '../common-types';
 import { isBoolean, isInterface, isString } from './misc';
 import sharp_ from 'sharp';
 import type {Region} from 'sharp';
@@ -95,8 +95,8 @@ const cropInterface = {
     h: 'number'
 };
 
-function toCropRegion(cropInfo: string | boolean | IAssetCropInfo): Region {
-    let crop = cropInfo as IAssetCropInfo;
+function toCropRegion(cropInfo: string | boolean | IImageCropInfo): Region {
+    let crop = cropInfo as IImageCropInfo;
     if (isString(cropInfo)) {
         try {
             crop = JSON.parse(cropInfo as string);
@@ -113,7 +113,7 @@ function toCropRegion(cropInfo: string | boolean | IAssetCropInfo): Region {
     };
 }
 
-export async function toImage<T = Buffer | Readable>(src: T, params?: IAssetImageParams, meta?: IAssetMeta): Promise<T> {
+export async function toImage<T = Buffer | Readable>(src: T, params?: IImageParams, meta?: IImageMeta): Promise<T> {
 
     // Default params and meta
     params = params || {};

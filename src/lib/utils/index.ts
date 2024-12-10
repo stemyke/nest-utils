@@ -31,6 +31,5 @@ export {
 export {
     idToString,
     createTransformer,
-    deleteFromBucket,
     paginate
 } from "./mongo";

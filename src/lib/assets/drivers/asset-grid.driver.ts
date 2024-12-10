@@ -1,14 +1,18 @@
 import { Connection, Types } from 'mongoose';
 import type { GridFSBucket } from 'mongodb';
 import { GridFSBucket as BucketImpl } from 'mongodb/lib/gridfs';
-import { IAssetDriver, IAssetUploadOpts } from '../common-types';
+import { Injectable } from '@nestjs/common';
+import { InjectConnection } from '@nestjs/mongoose';
 
+import { IAssetDriver, IAssetUploadOpts } from '../common';
+
+@Injectable()
 export class AssetGridDriver implements IAssetDriver {
     readonly metaCollection: string;
 
     protected bucket: GridFSBucket;
 
-    constructor(connection: Connection) {
+    constructor(@InjectConnection() connection: Connection) {
         this.bucket = new BucketImpl(connection.db, {bucketName: 'assets'});
         this.metaCollection = "assets.files";
     }

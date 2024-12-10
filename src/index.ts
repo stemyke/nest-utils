@@ -10,10 +10,8 @@ export {
     IPaginationParams,
     IPaginationMeta,
     IPagination,
-    IAssetCropInfo,
-    IAssetMeta,
-    IAssetImageParams,
-    IAsset,
+    IImageCropInfo,
+    IImageParams,
     IFileType,
-    IUploadedFile
+    FontFormat
 } from './lib/common-types';
