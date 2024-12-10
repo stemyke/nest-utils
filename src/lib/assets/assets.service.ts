@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Readable } from 'stream';
 import type { GridFSBucket, ObjectId, Filter, Collection } from 'mongodb';
+import { GridFSBucket as BucketImpl } from 'mongodb/lib/gridfs';
 import { Connection, Types } from 'mongoose';
 
 import { IAsset, IAssetMeta, IFileType } from '../common-types';
@@ -18,7 +19,7 @@ export class AssetsService {
     readonly collection: Collection<PartialAsset>;
 
     constructor(@InjectConnection() connection: Connection) {
-        // this.bucket = new GridFSBucket(connection.db, {bucketName: 'assets'});
+        this.bucket = new BucketImpl(connection.db, {bucketName: 'assets'});
         this.collection = connection.db.collection('assets');
     }
 
