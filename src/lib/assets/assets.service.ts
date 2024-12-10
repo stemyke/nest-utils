@@ -85,7 +85,7 @@ export class AssetsService {
         return new TempAsset(buffer, url, fileType.mime, metadata);
     }
 
-    async read(id: string): Promise<IAsset> {
+    async read(id: string | Types.ObjectId): Promise<IAsset> {
         return !id ? null : this.find({_id: new Types.ObjectId(id)});
     }
 
@@ -110,7 +110,7 @@ export class AssetsService {
         return Promise.all(assets.map(a => a.unlink()));
     }
 
-    async unlink(id: string): Promise<any> {
+    async unlink(id: string | Types.ObjectId): Promise<any> {
         const asset = await this.read(id);
         if (!asset) return null;
         return asset.unlink();
