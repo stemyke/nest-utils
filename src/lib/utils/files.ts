@@ -18,6 +18,9 @@ class ReadableStreamClone extends Readable {
         readableStream?.on("end", () => {
             this.push(null);
         });
+        readableStream?.on("close", () => {
+            this.push(null);
+        });
         readableStream?.on("error", err => {
             this.emit("error", err);
         });
@@ -49,7 +52,13 @@ export function streamToBuffer(stream: Readable): Promise<Buffer> {
             concat.push(data);
         });
         stream.on('error', reject);
-        stream.on('end', () => resolve(Buffer.concat(concat)));
+        stream.on('end', () => {
+            resolve(Buffer.concat(concat));
+        });
+        stream.on('close', () => {
+            resolve(Buffer.concat(concat));
+        });
+        stream.on('pause', () => console.log('pause'));
     })
 }
 
@@ -127,6 +136,7 @@ export async function toImage<T = Buffer | Readable>(src: T, params?: IAssetImag
     params.crop = isBoolean(params.crop) ? params.crop : params.crop == 'true';
 
     let buffer = src instanceof Readable ? await streamToBuffer(src) : src as any;
+
     try {
         // Get crop info
         const cropBefore = toCropRegion(params.cropBefore || (params.crop ? meta.cropBefore : null));

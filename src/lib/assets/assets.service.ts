@@ -41,18 +41,15 @@ export class AssetsService {
 
     async writeBuffer(buffer: Buffer, metadata: IAssetMeta = null, contentType: string = null): Promise<IAsset> {
         let fileType = {ext: '', mime: contentType} as IFileType;
-        console.log('writebuffer', metadata);
         try {
             fileType = await fileTypeFromBuffer(buffer);
         } catch (e) {
-            console.log('so??', e, metadata);
             if (!fileType.mime) {
                 throw new Error(`Can't determine mime type`);
             }
             console.log(`Can't determine mime type`, e);
         }
         metadata = metadata || {};
-        console.log('upload...', metadata);
         // buffer = await this.assetProcessor.process(buffer, metadata, fileType);
         return this.upload(bufferToStream(buffer), fileType, metadata);
     }
@@ -128,23 +125,17 @@ export class AssetsService {
         }, metadata || {});
         metadata.filename = metadata.filename || new Types.ObjectId().toHexString();
         metadata.extension = (fileType.ext || '').trim();
-        console.log(metadata, '???');
         return new Promise<IAsset>((resolve, reject) => {
             try {
                 const uploaderStream = this.driver.openUploadStream(metadata.filename, {
                     chunkSizeBytes: 1048576,
                     metadata
                 });
-                copyStream(stream).on('data', data => {
-                    console.log('dadadad', data);
-                });
-                copyStream(stream).pipe(uploaderStream)
+                stream.pipe(uploaderStream)
                     .on('error', error => {
-                        console.log('Error?');
                         reject(error.message || error);
                     })
                     .on('finish', () => {
-                        console.log('Finish?');
                         try {
                             const asset = new Asset(uploaderStream.id as ObjectId, {
                                 filename: metadata.filename,

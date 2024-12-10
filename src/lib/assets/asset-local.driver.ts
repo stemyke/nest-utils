@@ -3,6 +3,7 @@ import { rm } from 'fs/promises';
 import { Types } from 'mongoose';
 import { IAssetDriver, IAssetUploadOpts, IAssetUploadStream } from '../common-types';
 import { Readable } from 'stream';
+import { copyStream } from '../utils';
 
 export class AssetLocalDriver implements IAssetDriver {
     readonly metaCollection: string;
@@ -25,7 +26,7 @@ export class AssetLocalDriver implements IAssetDriver {
     }
 
     openDownloadStream(id: Types.ObjectId): Readable {
-        return createReadStream(`${this.dir}/${id.toHexString()}/file.bin`);
+        return createReadStream(`${this.dir}/${id.toHexString()}/file.bin`, {autoClose: true, emitClose: true});
     }
 
     delete(id: Types.ObjectId): Promise<void> {
