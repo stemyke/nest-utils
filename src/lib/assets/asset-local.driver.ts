@@ -3,7 +3,6 @@ import { rm } from 'fs/promises';
 import { Types } from 'mongoose';
 import { IAssetDriver, IAssetUploadOpts, IAssetUploadStream } from '../common-types';
 import { Readable } from 'stream';
-import { copyStream } from '../utils';
 
 export class AssetLocalDriver implements IAssetDriver {
     readonly metaCollection: string;
