@@ -24,22 +24,6 @@ export class AssetsService {
         this.collection = connection.db.collection(this.driver.metaCollection);
     }
 
-    async write(stream: Readable, contentType: string = null, metadata: IAssetMeta = null): Promise<IAsset> {
-        const uploadStream = copyStream(stream);
-        const buffer = await streamToBuffer(stream);
-        let fileType = {ext: '', mime: contentType} as IFileType;
-        try {
-            fileType = await fileTypeFromBuffer(buffer);
-        } catch (e) {
-            if (!fileType.mime) {
-                throw new Error(`Can't determine mime type: ${e}`);
-            }
-            console.log(`Can't determine mime type`, e);
-        }
-        metadata = metadata || {};
-        return this.upload(uploadStream, fileType, metadata);
-    }
-
     async writeBuffer(buffer: Buffer, metadata: IAssetMeta = null, contentType: string = null): Promise<IAsset> {
         let fileType = {ext: '', mime: contentType} as IFileType;
         try {
@@ -53,6 +37,11 @@ export class AssetsService {
         metadata = metadata || {};
         buffer = await this.assetProcessor.process(buffer, metadata, fileType);
         return this.upload(bufferToStream(buffer), fileType, metadata);
+    }
+
+    async writeStream(stream: Readable, metadata: IAssetMeta = null, contentType: string = null): Promise<IAsset> {
+        const buffer = await streamToBuffer(stream);
+        return this.writeBuffer(buffer, metadata, contentType);
     }
 
     async writeUrl(url: string, metadata: IAssetMeta = null): Promise<IAsset> {
