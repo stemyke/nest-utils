@@ -1,3 +1,4 @@
+export * from './lib/assets';
 export * from './lib/decorators';
 export * from './lib/pipes';
 export * from './lib/utils';
@@ -8,5 +9,10 @@ export {
     OnlyOfType,
     IPaginationParams,
     IPaginationMeta,
-    IPagination
+    IPagination,
+    IAssetCropInfo,
+    IAssetMeta,
+    IAssetImageParams,
+    IAsset,
+    IFileType
 } from './lib/common-types';

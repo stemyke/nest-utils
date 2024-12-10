@@ -2,6 +2,7 @@ import { FilterQuery, HydratedDocument, Model, Query, Types } from 'mongoose';
 
 import { IPagination, IPaginationParams } from '../common-types';
 import { isString, isFunction } from './misc';
+import type { GridFSBucket } from 'mongodb';
 
 export function idToString(value: any): any {
     if (Array.isArray(value)) {
@@ -22,6 +23,26 @@ export function createTransformer<T = any>(transform?: (doc: HydratedDocument<T>
         delete ret.__v;
         return isFunction(transform) ? transform(doc, ret, options) || ret : ret;
     };
+}
+
+export async function deleteFromBucket(bucket: GridFSBucket, id: Types.ObjectId | string): Promise<string> {
+    if (!id) {
+        // We don't care about empty id
+        return null;
+    }
+    const fileId = id instanceof Types.ObjectId ? id : new Types.ObjectId(id);
+    try {
+        await bucket.delete(fileId);
+    } catch (error) {
+        let err = error as any;
+        if (error) {
+            err = error.message || error || "";
+            if (!isString(err) || !err.startsWith("FileNotFound")) {
+                throw err;
+            }
+        }
+    }
+    return fileId.toHexString();
 }
 
 /**
