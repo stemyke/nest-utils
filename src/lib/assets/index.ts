@@ -13,4 +13,5 @@ export {
     IAssetUploadStream,
     IAssetUploadOpts,
     IAssetDriver,
+    IAssetModuleOpts
 } from './common';

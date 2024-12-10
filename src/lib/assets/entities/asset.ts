@@ -1,9 +1,9 @@
 import { Readable } from 'stream';
 import type { Collection, ObjectId } from 'mongodb';
 
-import { deleteAsset, IAsset, IAssetDriver, IAssetMeta } from '../common';
+import { IAsset, IAssetDriver, IAssetMeta } from '../common';
 import { IImageParams } from '../../common-types';
-import { streamToBuffer, toImage } from '../../utils';
+import { isString, streamToBuffer, toImage } from '../../utils';
 
 export class Asset implements IAsset {
 
@@ -48,7 +48,19 @@ export class Asset implements IAsset {
     }
 
     async unlink() {
-        return deleteAsset(this.driver, this.oid);
+        try {
+            await this.driver.delete(this.oid);
+            await this.collection.deleteOne({_id: this.oid});
+        } catch (error) {
+            let err = error as any;
+            if (error) {
+                err = error.message || error || "";
+                if (!isString(err) || !err.startsWith("FileNotFound")) {
+                    throw err;
+                }
+            }
+        }
+        return this.id;
     }
 
     async setMeta(metadata: Partial<IAssetMeta>) {

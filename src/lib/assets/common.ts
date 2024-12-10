@@ -80,23 +80,3 @@ export interface IAssetModuleOpts {
     driver?: 'local' | 'grid';
     localDir?: string;
 }
-
-export async function deleteAsset(driver: IAssetDriver, id: Types.ObjectId | string): Promise<string> {
-    if (!id) {
-        // We don't care about empty id
-        return null;
-    }
-    const fileId = id instanceof Types.ObjectId ? id : new Types.ObjectId(id);
-    try {
-        await driver.delete(fileId);
-    } catch (error) {
-        let err = error as any;
-        if (error) {
-            err = error.message || error || "";
-            if (!isString(err) || !err.startsWith("FileNotFound")) {
-                throw err;
-            }
-        }
-    }
-    return fileId.toHexString();
-}
