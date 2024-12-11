@@ -5,11 +5,10 @@ import type { Collection, Filter, ObjectId } from 'mongodb';
 import { Connection, Types } from 'mongoose';
 
 import { IFileType } from '../common-types';
-import { bufferToStream, copyStream, fetchBuffer, fileTypeFromBuffer, streamToBuffer } from '../utils';
+import { bufferToStream, fetchBuffer, fileTypeFromBuffer, streamToBuffer } from '../utils';
 
-import { ASSET_DRIVER, IAsset, IAssetDriver, IAssetMeta } from './common';
+import { ASSET_DRIVER, ASSET_PROCESSOR, IAsset, IAssetDriver, IAssetMeta, IAssetProcessor } from './common';
 import { Asset, TempAsset } from './entities';
-import { AssetProcessorService } from './asset-processor.service';
 
 export type PartialAsset = Partial<IAsset>;
 
@@ -20,8 +19,9 @@ export class AssetsService {
 
     constructor(@InjectConnection() connection: Connection,
                 @Inject(ASSET_DRIVER) readonly driver: IAssetDriver,
-                readonly assetProcessor: AssetProcessorService) {
+                @Inject(ASSET_PROCESSOR) readonly assetProcessor: IAssetProcessor) {
         this.collection = connection.db.collection(this.driver.metaCollection);
+        console.log(assetProcessor, "????")
     }
 
     async writeBuffer(buffer: Buffer, metadata: IAssetMeta = null, contentType: string = null): Promise<IAsset> {

@@ -1,12 +1,12 @@
 import { DynamicModule, Module, Provider, Type } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import { ASSET_DRIVER, IAssetDriver, IAssetModuleOpts, LOCAL_DIR } from './common';
+import { ASSET_DRIVER, ASSET_PROCESSOR, IAssetDriver, IAssetModuleOpts, LOCAL_DIR } from './common';
 import { AssetsController } from './assets.controller';
 import { AssetsService } from './assets.service';
 import { AssetResolverService } from './asset-resolver.service';
 import { AssetProcessorService } from './asset-processor.service';
-import { AssetLocalDriver, AssetGridDriver } from './drivers';
+import { AssetGridDriver, AssetLocalDriver } from './drivers';
 
 export function createAssetProviders(opts?: IAssetModuleOpts): Provider[] {
     let driver: Type<IAssetDriver> = AssetLocalDriver;
@@ -15,7 +15,11 @@ export function createAssetProviders(opts?: IAssetModuleOpts): Provider[] {
             driver = AssetGridDriver;
             break;
     }
+    const processor= opts?.assetProcessor || AssetProcessorService;
     return [
+        AssetsService,
+        processor,
+        driver,
         {
             provide: LOCAL_DIR,
             useValue: opts?.localDir || 'assets_files'
@@ -23,16 +27,16 @@ export function createAssetProviders(opts?: IAssetModuleOpts): Provider[] {
         {
             provide: ASSET_DRIVER,
             useExisting: driver
+        },
+        {
+            provide: ASSET_PROCESSOR,
+            useExisting: processor
         }
     ];
 }
 
 const providers = [
-    AssetLocalDriver,
-    AssetGridDriver,
-    AssetResolverService,
-    AssetProcessorService,
-    AssetsService
+    AssetResolverService
 ];
 
 @Module({

@@ -1,11 +1,13 @@
+import { Type } from '@nestjs/common';
 import { Readable, Writable } from 'stream';
 import { Types } from 'mongoose';
-import { IImageMeta, IImageParams } from '../common-types';
-import { isString } from '../utils';
+import { IFileType, IImageMeta, IImageParams } from '../common-types';
 
 export const LOCAL_DIR = Symbol.for('ASSET_LOCAL_DIR');
 
 export const ASSET_DRIVER = Symbol.for('ASSET_DRIVER');
+
+export const ASSET_PROCESSOR = Symbol.for('ASSET_PROCESSOR');
 
 export interface IUploadedFile {
     /** Name of the form field associated with this file. */
@@ -76,7 +78,12 @@ export interface IAssetDriver {
     delete(id: Types.ObjectId): Promise<void>;
 }
 
+export interface IAssetProcessor {
+    process(buffer: Buffer, metadata: IAssetMeta, fileType: IFileType): Promise<Buffer>;
+}
+
 export interface IAssetModuleOpts {
     driver?: 'local' | 'grid';
     localDir?: string;
+    assetProcessor?: Type<IAssetProcessor>;
 }
