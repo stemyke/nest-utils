@@ -23,6 +23,8 @@ import { AssetImageParams } from './asset-image-params';
 import { AssetsService } from './assets.service';
 import { AssetResolverService } from './asset-resolver.service';
 
+type AssetReqType = 'Image' | 'Asset';
+
 @Controller('assets')
 export class AssetsController {
 
@@ -101,7 +103,7 @@ export class AssetsController {
         return asset.metadata;
     }
 
-    protected async getAsset(type: string, id: string, lazy: boolean): Promise<IAsset> {
+    protected async getAsset(type: AssetReqType, id: string, lazy: boolean): Promise<IAsset> {
         if (!isValidObjectId(id)) {
             throw new BadRequestException(`Invalid object id provided: ${id}`);
         }
@@ -109,19 +111,23 @@ export class AssetsController {
         if (!asset) {
             throw new BadRequestException(`${type} with id: '${id}' not found.`);
         }
-        if (asset.metadata?.classified) {
-            throw new ForbiddenException(`${type} is classified, and can be only downloaded from a custom url.`);
-        }
-        return asset;
+        return this.resolveFinalAsset(type, asset);
     }
 
-    protected async getAssetByName(type: string, filename: string): Promise<IAsset> {
+    protected async getAssetByName(type: AssetReqType, filename: string): Promise<IAsset> {
         const asset = await this.assets.find({filename});
         if (!asset) {
             throw new NotFoundException(`${type} with filename: '${filename}' not found.`);
         }
+        return this.resolveFinalAsset(type, asset);
+    }
+
+    protected async resolveFinalAsset(type: AssetReqType, asset: IAsset): Promise<IAsset> {
         if (asset.metadata?.classified) {
             throw new ForbiddenException(`${type} is classified, and can be only downloaded from a custom url.`);
+        }
+        if (type == 'Image' && asset.metadata.thumbnail) {
+            return this.resolveFinalAsset(type, await this.assetResolver.resolve(asset.metadata.thumbnail));
         }
         return asset;
     }
