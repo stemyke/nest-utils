@@ -1,28 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import fontKit_, {Font} from 'fontkit';
+import ffmpeg from 'fluent-ffmpeg';
 import sharp_ from 'sharp';
 import {FontFormat, IFileType} from '../common-types';
-import {IAssetMeta} from './common';
+import { fontProps, fontTypes, IAssetMeta, IAssetProcessor, imageTypes, videoTypes } from './common';
+import { PassThrough, Readable } from 'stream';
+import { bufferToStream, streamToBuffer } from '../utils';
 
 const sharp = sharp_;
 const fontKit = fontKit_;
 
-const fontTypes = [
-    'application/font-woff', 'application/font-woff2', 'application/x-font-opentype', 'application/x-font-truetype', 'application/x-font-datafork',
-    'font/woff', 'font/woff2', 'font/otf', 'font/ttf', 'font/datafork'
-];
-
-const imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml'];
-
-const fontProps = [
-    'postscriptName', 'fullName', 'familyName', 'subfamilyName',
-    'copyright', 'version', 'unitsPerEm', 'ascent', 'descent', 'lineGap',
-    'underlinePosition', 'underlineThickness', 'italicAngle', 'capHeight',
-    'xHeight', 'numGlyphs', 'characterSet', 'availableFeatures'
-];
-
 @Injectable()
-export class AssetProcessorService {
+export class AssetProcessorService implements IAssetProcessor {
 
     static extractFontFormat(font: Font): FontFormat {
         const name: string = font.constructor.name;
@@ -42,6 +31,10 @@ export class AssetProcessorService {
 
     static isImage(contentType: string): boolean {
         return imageTypes.indexOf(contentType) >= 0;
+    }
+
+    static isVideo(contentType: string): boolean {
+        return videoTypes.indexOf(contentType) >= 0;
     }
 
     static async copyImageMeta(buffer: Buffer, metadata: IAssetMeta, fileType: IFileType): Promise<Buffer> {
@@ -91,5 +84,32 @@ export class AssetProcessorService {
             AssetProcessorService.copyFontMeta(buffer, metadata);
         }
         return buffer;
+    }
+
+    async preview(buffer: Buffer, metadata: IAssetMeta, fileType: IFileType): Promise<Buffer> {
+        if (AssetProcessorService.isVideo(fileType.mime)) {
+            const thumbnail = await this.generateVideoThumbnail(buffer);
+            return streamToBuffer(thumbnail);
+        }
+        return null;
+    }
+
+    protected async generateVideoThumbnail(buffer: Buffer) {
+        return new Promise<Readable>((resolve, reject) => {
+            const res = new PassThrough();
+            ffmpeg(bufferToStream(buffer))
+                .screenshot({
+                    timestamps: [1]
+                })
+                .writeToStream(res)
+                .on('end', () => {
+                    console.log('Thumbnail generated successfully.');
+                    resolve(res);
+                })
+                .on('error', (err) => {
+                    console.error('Error generating thumbnail:', err);
+                    reject(err);
+                });
+        });
     }
 }

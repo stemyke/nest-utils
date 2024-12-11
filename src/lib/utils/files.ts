@@ -76,7 +76,10 @@ function fixTextFileType(type: IFileType, buffer: Buffer): IFileType {
 
 export async function fileTypeFromBuffer(buffer: Buffer): Promise<IFileType> {
     const mimetics = new Mimetics();
-    const type: IFileType = (await mimetics.parseAsync(buffer)) ?? {ext: 'txt', mime: 'text/plain'};
+    const type: IFileType = await mimetics.parseAsync(buffer);
+    if (!type) {
+        throw new Error(`Can't determine file type of buffer`);
+    }
     if (checkTextFileType(type)) {
         return fixTextFileType(type, buffer);
     }

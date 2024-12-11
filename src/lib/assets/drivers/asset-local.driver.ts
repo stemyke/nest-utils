@@ -1,5 +1,6 @@
 import { createReadStream, createWriteStream, mkdirSync } from 'fs';
 import { rm, writeFile } from 'fs/promises';
+import type { ObjectId } from 'mongodb';
 import { Types } from 'mongoose';
 import { Inject, Injectable } from '@nestjs/common';
 
@@ -30,11 +31,11 @@ export class AssetLocalDriver implements IAssetDriver {
         return stream;
     }
 
-    openDownloadStream(id: Types.ObjectId) {
+    openDownloadStream(id: ObjectId) {
         return createReadStream(`${this.dir}/${id.toHexString()}/file.bin`, {autoClose: true, emitClose: true});
     }
 
-    delete(id: Types.ObjectId) {
+    delete(id: ObjectId) {
         return rm(`${this.dir}/${id.toHexString()}`, { recursive: true, force: true });
     }
 }

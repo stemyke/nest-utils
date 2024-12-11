@@ -1,5 +1,5 @@
 import { Connection, Types } from 'mongoose';
-import type { GridFSBucket } from 'mongodb';
+import type { GridFSBucket, ObjectId } from 'mongodb';
 import { GridFSBucket as BucketImpl } from 'mongodb/lib/gridfs';
 import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
@@ -21,11 +21,11 @@ export class AssetGridDriver implements IAssetDriver {
         return this.bucket.openUploadStream(filename, opts);
     }
 
-    openDownloadStream(id: Types.ObjectId) {
+    openDownloadStream(id: ObjectId) {
         return this.bucket.openDownloadStream(id);
     }
 
-    delete(id: Types.ObjectId) {
+    delete(id: ObjectId) {
         return this.bucket.delete(id);
     }
 }

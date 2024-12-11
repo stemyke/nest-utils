@@ -1,4 +1,5 @@
 import { Readable } from 'stream';
+import type { ObjectId } from 'mongodb';
 import { Types } from 'mongoose';
 import { IImageParams } from '../../common-types';
 import { bufferToStream, toImage } from '../../utils';
@@ -6,7 +7,7 @@ import { IAsset, IAssetMeta } from '../common';
 
 export class TempAsset implements IAsset {
 
-    readonly oid: Types.ObjectId;
+    readonly oid: ObjectId;
     readonly id: string;
 
     get stream(): Readable {

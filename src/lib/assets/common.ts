@@ -1,6 +1,6 @@
 import { Type } from '@nestjs/common';
 import { Readable, Writable } from 'stream';
-import { Types } from 'mongoose';
+import type { ObjectId } from 'mongodb';
 import { IFileType, IImageMeta, IImageParams } from '../common-types';
 
 export const LOCAL_DIR = Symbol.for('ASSET_LOCAL_DIR');
@@ -40,11 +40,12 @@ export interface IAssetMeta extends IImageMeta {
     downloadCount?: number;
     firstDownload?: Date;
     lastDownload?: Date;
+    preview?: ObjectId | string;
     [prop: string]: any;
 }
 
 export interface IAsset {
-    readonly oid: Types.ObjectId;
+    readonly oid: ObjectId;
     readonly id: string;
     readonly filename: string;
     readonly contentType: string;
@@ -62,7 +63,7 @@ export interface IAsset {
 }
 
 export interface IAssetUploadStream extends Writable {
-    id?: Types.ObjectId;
+    id?: ObjectId;
     done?: boolean;
 }
 
@@ -74,12 +75,13 @@ export interface IAssetUploadOpts {
 export interface IAssetDriver {
     readonly metaCollection: string;
     openUploadStream(filename: string, opts?: IAssetUploadOpts): IAssetUploadStream;
-    openDownloadStream(id: Types.ObjectId): Readable;
-    delete(id: Types.ObjectId): Promise<void>;
+    openDownloadStream(id: ObjectId): Readable;
+    delete(id: ObjectId): Promise<void>;
 }
 
 export interface IAssetProcessor {
     process(buffer: Buffer, metadata: IAssetMeta, fileType: IFileType): Promise<Buffer>;
+    preview(buffer: Buffer, metadata: IAssetMeta, fileType: IFileType): Promise<Buffer>;
 }
 
 export interface IAssetModuleOpts {
@@ -87,3 +89,19 @@ export interface IAssetModuleOpts {
     localDir?: string;
     assetProcessor?: Type<IAssetProcessor>;
 }
+
+export const imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml'];
+
+export const videoTypes = ['video/mp4', 'video/mpeg', 'video/ogg', 'video/x-msvideo'];
+
+export const fontTypes = [
+    'application/font-woff', 'application/font-woff2', 'application/x-font-opentype', 'application/x-font-truetype', 'application/x-font-datafork',
+    'font/woff', 'font/woff2', 'font/otf', 'font/ttf', 'font/datafork'
+];
+
+export const fontProps = [
+    'postscriptName', 'fullName', 'familyName', 'subfamilyName',
+    'copyright', 'version', 'unitsPerEm', 'ascent', 'descent', 'lineGap',
+    'underlinePosition', 'underlineThickness', 'italicAngle', 'capHeight',
+    'xHeight', 'numGlyphs', 'characterSet', 'availableFeatures'
+];

@@ -30,13 +30,14 @@ export class AssetsService {
             fileType = await fileTypeFromBuffer(buffer);
         } catch (e) {
             if (!fileType.mime) {
-                throw new Error(`Can't determine mime type`);
+                throw e;
             }
-            console.log(`Can't determine mime type`, e);
+            console.log(`${e}`);
         }
         metadata = metadata || {};
         buffer = await this.assetProcessor.process(buffer, metadata, fileType);
-        return this.upload(bufferToStream(buffer), fileType, metadata);
+        await this.generatePreview(buffer, metadata, fileType);
+        return this.upload(buffer, metadata, fileType);
     }
 
     async writeStream(stream: Readable, metadata: IAssetMeta = null, contentType: string = null): Promise<IAsset> {
@@ -75,7 +76,7 @@ export class AssetsService {
         return new TempAsset(buffer, url, fileType.mime, metadata);
     }
 
-    async read(id: string | Types.ObjectId): Promise<IAsset> {
+    async read(id: string | ObjectId): Promise<IAsset> {
         return !id ? null : this.find({_id: new Types.ObjectId(id)});
     }
 
@@ -100,13 +101,16 @@ export class AssetsService {
         return Promise.all(assets.map(a => a.unlink()));
     }
 
-    async unlink(id: string | Types.ObjectId): Promise<any> {
+    async unlink(id: string | ObjectId): Promise<any> {
         const asset = await this.read(id);
         if (!asset) return null;
+        if (asset.metadata.preview) {
+            await this.unlink(asset.metadata.preview);
+        }
         return asset.unlink();
     }
 
-    protected async upload(stream: Readable, fileType: IFileType, metadata: IAssetMeta): Promise<IAsset> {
+    protected async upload(buffer: Buffer, metadata: IAssetMeta, fileType: IFileType): Promise<IAsset> {
         const contentType = fileType.mime.trim();
         metadata = Object.assign({
             downloadCount: 0,
@@ -121,7 +125,7 @@ export class AssetsService {
                     chunkSizeBytes: 1048576,
                     metadata
                 });
-                stream.pipe(uploaderStream)
+                bufferToStream(buffer).pipe(uploaderStream)
                     .on('error', error => {
                         reject(error.message || error);
                     })
@@ -145,5 +149,20 @@ export class AssetsService {
                 reject(e);
             }
         });
+    }
+
+    protected async generatePreview(buffer: Buffer, metadata: IAssetMeta, fileType: IFileType): Promise<void> {
+        let preview = await this.assetProcessor.preview(buffer, metadata, fileType);
+        if (!preview) return;
+        const previewMeta: IAssetMeta = {};
+        let previewType: IFileType = {ext: 'jpg', mime: 'image/jpeg'};
+        try {
+            previewType = await fileTypeFromBuffer(preview);
+        } catch (e) {
+            console.log(`Can't determine file type of preview`);
+        }
+        preview = await this.assetProcessor.process(buffer, previewMeta, previewType);
+        const asset = await this.upload(preview, previewMeta, previewType);
+        metadata.preview = asset?.oid;
     }
 }

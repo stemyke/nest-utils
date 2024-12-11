@@ -1,4 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import type { ObjectId } from 'mongodb';
+
 import {IAsset} from './common';
 import {AssetsService} from './assets.service';
 
@@ -9,7 +11,7 @@ export class AssetResolverService {
 
     }
 
-    async resolve(id: string, lazy: boolean = false): Promise<IAsset> {
+    async resolve(id: string | ObjectId, lazy: boolean = false): Promise<IAsset> {
         let asset: IAsset = null;
         // if (lazy) {
         //     const lazyAsset = await this.lazyAssets.read(id);

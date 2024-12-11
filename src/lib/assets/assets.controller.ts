@@ -126,8 +126,8 @@ export class AssetsController {
         if (asset.metadata?.classified) {
             throw new ForbiddenException(`${type} is classified, and can be only downloaded from a custom url.`);
         }
-        if (type == 'Image' && asset.metadata.thumbnail) {
-            return this.resolveFinalAsset(type, await this.assetResolver.resolve(asset.metadata.thumbnail));
+        if (type == 'Image' && asset.metadata.preview) {
+            return this.resolveFinalAsset(type, await this.assetResolver.resolve(asset.metadata.preview));
         }
         return asset;
     }
