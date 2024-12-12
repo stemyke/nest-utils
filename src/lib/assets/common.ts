@@ -7,6 +7,8 @@ export const LOCAL_DIR = Symbol.for('ASSET_LOCAL_DIR');
 
 export const ASSET_DRIVER = Symbol.for('ASSET_DRIVER');
 
+export const ASSET_TYPE_DETECTOR = Symbol.for('ASSET_TYPE_DETECTOR');
+
 export const ASSET_PROCESSOR = Symbol.for('ASSET_PROCESSOR');
 
 export interface IUploadedFile {
@@ -79,6 +81,10 @@ export interface IAssetDriver {
     delete(id: ObjectId): Promise<void>;
 }
 
+export interface IAssetTypeDetector {
+    detect(buffer: Buffer, contentType: string): Promise<IFileType>;
+}
+
 export interface IAssetProcessor {
     process(buffer: Buffer, metadata: IAssetMeta, fileType: IFileType): Promise<Buffer>;
     preview(buffer: Buffer, metadata: IAssetMeta, fileType: IFileType): Promise<Buffer>;
@@ -87,6 +93,7 @@ export interface IAssetProcessor {
 export interface IAssetModuleOpts {
     driver?: 'local' | 'grid';
     localDir?: string;
+    typeDetector?: Type<IAssetTypeDetector>;
     assetProcessor?: Type<IAssetProcessor>;
 }
 

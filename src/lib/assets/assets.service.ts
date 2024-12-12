@@ -5,9 +5,22 @@ import type { Collection, Filter, ObjectId } from 'mongodb';
 import { Connection, Types } from 'mongoose';
 
 import { IFileType } from '../common-types';
-import { bufferToStream, fetchBuffer, fileTypeFromBuffer, streamToBuffer } from '../utils';
+import {
+    bufferToStream,
+    fetchBuffer,
+    streamToBuffer,
+} from '../utils';
 
-import { ASSET_DRIVER, ASSET_PROCESSOR, IAsset, IAssetDriver, IAssetMeta, IAssetProcessor } from './common';
+import {
+    ASSET_DRIVER,
+    ASSET_PROCESSOR,
+    ASSET_TYPE_DETECTOR,
+    IAsset,
+    IAssetDriver,
+    IAssetMeta,
+    IAssetProcessor,
+    IAssetTypeDetector,
+} from './common';
 import { Asset, TempAsset } from './entities';
 
 export type PartialAsset = Partial<IAsset>;
@@ -19,20 +32,13 @@ export class AssetsService {
 
     constructor(@InjectConnection() connection: Connection,
                 @Inject(ASSET_DRIVER) readonly driver: IAssetDriver,
+                @Inject(ASSET_TYPE_DETECTOR) readonly typeDetector: IAssetTypeDetector,
                 @Inject(ASSET_PROCESSOR) readonly assetProcessor: IAssetProcessor) {
         this.collection = connection.db.collection("assets.metadata");
     }
 
     async writeBuffer(buffer: Buffer, metadata: IAssetMeta = null, contentType: string = null): Promise<IAsset> {
-        let fileType = {ext: '', mime: contentType} as IFileType;
-        try {
-            fileType = await fileTypeFromBuffer(buffer);
-        } catch (e) {
-            if (!fileType.mime) {
-                throw e;
-            }
-            console.log(`${e}`);
-        }
+        const fileType = await this.typeDetector.detect(buffer, contentType);
         metadata = metadata || {};
         buffer = await this.assetProcessor.process(buffer, metadata, fileType);
         await this.generatePreview(buffer, metadata, fileType);
@@ -58,15 +64,7 @@ export class AssetsService {
 
     async download(url: string, contentType: string = null): Promise<IAsset> {
         let buffer = await fetchBuffer(url);
-        let fileType = {ext: '', mime: contentType} as IFileType;
-        try {
-            fileType = await fileTypeFromBuffer(buffer);
-        } catch (e) {
-            if (!fileType.mime) {
-                throw `Can't determine mime type`;
-            }
-            console.log(`Can't determine mime type`, e);
-        }
+        const fileType = await this.typeDetector.detect(buffer, contentType);
         const metadata: IAssetMeta = {
             filename: url,
             extension: (fileType.ext || '').trim()
@@ -154,12 +152,7 @@ export class AssetsService {
         let preview = await this.assetProcessor.preview(buffer, metadata, fileType);
         if (!preview) return;
         const previewMeta: IAssetMeta = {};
-        let previewType: IFileType = {ext: 'jpg', mime: 'image/jpeg'};
-        try {
-            previewType = await fileTypeFromBuffer(preview);
-        } catch (e) {
-            console.log(`Can't determine file type of preview`);
-        }
+        const previewType = await this.typeDetector.detect(buffer, '');
         preview = await this.assetProcessor.process(preview, previewMeta, previewType);
         const asset = await this.upload(preview, previewMeta, previewType);
         metadata.preview = asset?.oid;

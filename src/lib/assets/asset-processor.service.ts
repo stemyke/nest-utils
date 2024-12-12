@@ -64,7 +64,6 @@ export class AssetProcessorService implements IAssetProcessor {
             }
             return buffer;
         }
-        console.log(`Sharpie`, buffer.slice(0, 50));
         const output = await sharp(buffer).rotate().toBuffer({resolveWithObject: true});
         Object.assign(metadata, output.info);
         return output.data;
@@ -84,7 +83,6 @@ export class AssetProcessorService implements IAssetProcessor {
 
     async process(buffer: Buffer, metadata: IAssetMeta, fileType: IFileType): Promise<Buffer> {
         if (AssetProcessorService.isImage(fileType.mime)) {
-            console.log(metadata, fileType, `???`);
             buffer = await AssetProcessorService.copyImageMeta(buffer, metadata, fileType);
         }
         if (AssetProcessorService.isFont(fileType.mime)) {

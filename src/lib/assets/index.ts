@@ -13,6 +13,7 @@ export {
     IAssetUploadStream,
     IAssetUploadOpts,
     IAssetDriver,
+    IAssetTypeDetector,
     IAssetModuleOpts,
     imageTypes,
     videoTypes,
