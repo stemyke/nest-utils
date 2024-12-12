@@ -41,6 +41,7 @@ export interface IAssetMeta extends IImageMeta {
     firstDownload?: Date;
     lastDownload?: Date;
     preview?: ObjectId | string;
+    publicUrl?: string;
     [prop: string]: any;
 }
 
@@ -73,7 +74,6 @@ export interface IAssetUploadOpts {
 }
 
 export interface IAssetDriver {
-    readonly metaCollection: string;
     openUploadStream(filename: string, opts?: IAssetUploadOpts): IAssetUploadStream;
     openDownloadStream(id: ObjectId): Readable;
     delete(id: ObjectId): Promise<void>;

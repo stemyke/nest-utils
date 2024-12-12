@@ -72,7 +72,7 @@ export class AssetsController {
 
     @Public()
     @Get('/image/:id/:rotation')
-    async getImageRotation(@Param('id') id: string, @Query() params: AssetImageParams, @Param('rotation') rotation: number = 0) {
+    async getImageRotation(@Param('id') id: string, @Query() params: AssetImageParams, @Param('rotation') rotation: number) {
         const asset = await this.getAsset('Image', id, params.lazy);
         if (rotation !== 0) {
             params.rotation = params.rotation || rotation;
@@ -83,7 +83,7 @@ export class AssetsController {
     @Public()
     @Get('/image/:id')
     async getImage(@Param('id') id: string, @Query() params: AssetImageParams) {
-        return this.getImageRotation(id, params);
+        return this.getImageRotation(id, params, 0);
     }
 
     @Public()

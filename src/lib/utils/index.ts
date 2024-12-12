@@ -19,6 +19,9 @@ export {
 } from "./misc";
 
 export {
+    tempDirectory,
+    tempWrite,
+    generateVideoThumbnail,
     copyStream,
     fetchBuffer,
     bufferToStream,

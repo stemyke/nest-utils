@@ -6,15 +6,11 @@ import { Inject, Injectable } from '@nestjs/common';
 
 import { IAssetDriver, IAssetUploadOpts, IAssetUploadStream, LOCAL_DIR } from '../common';
 
-@Injectable({
-
-})
+@Injectable()
 export class AssetLocalDriver implements IAssetDriver {
     readonly metaCollection: string;
 
-    constructor(@Inject(LOCAL_DIR) protected dir: string) {
-        this.metaCollection = "assets.local";
-    }
+    constructor(@Inject(LOCAL_DIR) protected dir: string) {}
 
     openUploadStream(filename: string, opts?: IAssetUploadOpts) {
         const id = new Types.ObjectId();

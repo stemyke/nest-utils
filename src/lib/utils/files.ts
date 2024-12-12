@@ -1,12 +1,26 @@
-import { PassThrough, Readable, ReadableOptions } from 'stream';
+import { Readable, ReadableOptions } from 'stream';
+import { tmpdir } from 'os';
+import { Buffer } from 'buffer';
+import { createReadStream, realpathSync } from 'fs';
+import { writeFile, mkdir } from 'fs/promises';
+import { join, dirname, basename } from 'path';
+import { randomUUID } from 'crypto';
+import ffmpeg from 'fluent-ffmpeg';
 import Mimetics from 'mimetics';
 import fetch from 'node-fetch-cjs';
-import { IImageCropInfo, IImageParams, IFileType, IImageMeta } from '../common-types';
+import {
+    IFileType,
+    IImageCropInfo,
+    IImageMeta,
+    IImageParams,
+} from '../common-types';
 import { isBoolean, isInterface, isString } from './misc';
+import type { Region } from 'sharp';
 import sharp_ from 'sharp';
-import type {Region} from 'sharp';
 
 const sharp = sharp_;
+
+export const tempDirectory = realpathSync(tmpdir());
 
 class ReadableStreamClone extends Readable {
 
@@ -26,9 +40,41 @@ class ReadableStreamClone extends Readable {
         });
     }
 
-    _read(size: number) {
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    _read() {
 
     }
+}
+
+export async function tempPath(filePath: string) {
+    const path = join(tempDirectory, randomUUID(), filePath);
+    await mkdir(dirname(path), { recursive: true });
+    return path;
+}
+
+export async function tempWrite(content: string | Buffer, filePath: string) {
+    const path = await tempPath(filePath);
+    await writeFile(path, content);
+    return path;
+}
+
+export async function generateVideoThumbnail(buffer: Buffer) {
+    const input = await tempWrite(buffer, 'video');
+    const output = await tempPath('thumbnail.png');
+    return new Promise<Readable>((resolve, reject) => {
+        ffmpeg(input)
+            .on('end', () => {
+                resolve(createReadStream(output));
+            })
+            .on('error', (err) => {
+                reject(err);
+            })
+            .thumbnail({
+                timestamps: [1],
+                folder: dirname(output),
+                filename: basename(output)
+            });
+    });
 }
 
 export function copyStream(stream: Readable, opts?: ReadableOptions): Readable {

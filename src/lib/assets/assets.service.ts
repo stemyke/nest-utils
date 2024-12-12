@@ -20,8 +20,7 @@ export class AssetsService {
     constructor(@InjectConnection() connection: Connection,
                 @Inject(ASSET_DRIVER) readonly driver: IAssetDriver,
                 @Inject(ASSET_PROCESSOR) readonly assetProcessor: IAssetProcessor) {
-        this.collection = connection.db.collection(this.driver.metaCollection);
-        console.log(assetProcessor, "????")
+        this.collection = connection.db.collection("assets.metadata");
     }
 
     async writeBuffer(buffer: Buffer, metadata: IAssetMeta = null, contentType: string = null): Promise<IAsset> {
@@ -89,7 +88,7 @@ export class AssetsService {
         const cursor = this.collection.find(where);
         const items = await cursor.toArray() || [];
         const result: IAsset[] = [];
-        for (let item of items) {
+        for (const item of items) {
             if (!item) continue;
             result.push(new Asset(item._id, item, this.collection, this.driver));
         }
@@ -161,7 +160,7 @@ export class AssetsService {
         } catch (e) {
             console.log(`Can't determine file type of preview`);
         }
-        preview = await this.assetProcessor.process(buffer, previewMeta, previewType);
+        preview = await this.assetProcessor.process(preview, previewMeta, previewType);
         const asset = await this.upload(preview, previewMeta, previewType);
         metadata.preview = asset?.oid;
     }

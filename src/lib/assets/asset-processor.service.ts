@@ -1,11 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import fontKit_, {Font} from 'fontkit';
-import ffmpeg from 'fluent-ffmpeg';
+import fontKit_, { Font } from 'fontkit';
 import sharp_ from 'sharp';
-import {FontFormat, IFileType} from '../common-types';
-import { fontProps, fontTypes, IAssetMeta, IAssetProcessor, imageTypes, videoTypes } from './common';
-import { PassThrough, Readable } from 'stream';
-import { bufferToStream, streamToBuffer } from '../utils';
+import { FontFormat, IFileType } from '../common-types';
+import {
+    fontProps,
+    fontTypes,
+    IAssetMeta,
+    IAssetProcessor,
+    imageTypes,
+    videoTypes,
+} from './common';
+import { generateVideoThumbnail, streamToBuffer } from '../utils';
 
 const sharp = sharp_;
 const fontKit = fontKit_;
@@ -59,6 +64,7 @@ export class AssetProcessorService implements IAssetProcessor {
             }
             return buffer;
         }
+        console.log(`Sharpie`, buffer.slice(0, 50));
         const output = await sharp(buffer).rotate().toBuffer({resolveWithObject: true});
         Object.assign(metadata, output.info);
         return output.data;
@@ -78,6 +84,7 @@ export class AssetProcessorService implements IAssetProcessor {
 
     async process(buffer: Buffer, metadata: IAssetMeta, fileType: IFileType): Promise<Buffer> {
         if (AssetProcessorService.isImage(fileType.mime)) {
+            console.log(metadata, fileType, `???`);
             buffer = await AssetProcessorService.copyImageMeta(buffer, metadata, fileType);
         }
         if (AssetProcessorService.isFont(fileType.mime)) {
@@ -88,28 +95,9 @@ export class AssetProcessorService implements IAssetProcessor {
 
     async preview(buffer: Buffer, metadata: IAssetMeta, fileType: IFileType): Promise<Buffer> {
         if (AssetProcessorService.isVideo(fileType.mime)) {
-            const thumbnail = await this.generateVideoThumbnail(buffer);
+            const thumbnail = await generateVideoThumbnail(buffer);
             return streamToBuffer(thumbnail);
         }
         return null;
-    }
-
-    protected async generateVideoThumbnail(buffer: Buffer) {
-        return new Promise<Readable>((resolve, reject) => {
-            const res = new PassThrough();
-            ffmpeg(bufferToStream(buffer))
-                .screenshot({
-                    timestamps: [1]
-                })
-                .writeToStream(res)
-                .on('end', () => {
-                    console.log('Thumbnail generated successfully.');
-                    resolve(res);
-                })
-                .on('error', (err) => {
-                    console.error('Error generating thumbnail:', err);
-                    reject(err);
-                });
-        });
     }
 }
