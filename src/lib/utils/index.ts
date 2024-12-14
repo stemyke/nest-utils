@@ -8,6 +8,8 @@ export {
     fetchBuffer,
     bufferToStream,
     streamToBuffer,
+    checkTextFileType,
+    fixTextFileType,
     fileTypeFromBuffer,
     fileTypeFromStream,
     toImage

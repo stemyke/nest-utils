@@ -106,7 +106,7 @@ export interface IAssetDriver {
 }
 
 export interface IAssetTypeDetector {
-    detect(buffer: Buffer, contentType: string): Promise<IFileType>;
+    detect(file: IUploadedFile): Promise<IFileType>;
 }
 
 export interface IAssetProcessor {

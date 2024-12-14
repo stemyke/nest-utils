@@ -8,18 +8,17 @@ import { IFileType } from '../common-types';
 import {
     bufferToStream,
     fetchBuffer,
+    fileTypeFromBuffer,
     streamToBuffer,
 } from '../utils';
 
 import {
     ASSET_DRIVER,
     ASSET_PROCESSOR,
-    ASSET_TYPE_DETECTOR,
     IAsset,
     IAssetDriver,
     IAssetMeta,
     IAssetProcessor,
-    IAssetTypeDetector,
 } from './common';
 import { Asset, TempAsset } from './entities';
 
@@ -32,22 +31,21 @@ export class AssetsService {
 
     constructor(@InjectConnection() connection: Connection,
                 @Inject(ASSET_DRIVER) readonly driver: IAssetDriver,
-                @Inject(ASSET_TYPE_DETECTOR) readonly typeDetector: IAssetTypeDetector,
                 @Inject(ASSET_PROCESSOR) readonly assetProcessor: IAssetProcessor) {
         this.collection = connection.db.collection("assets.metadata");
     }
 
-    async writeBuffer(buffer: Buffer, metadata: IAssetMeta = null, contentType: string = null): Promise<IAsset> {
-        const fileType = await this.typeDetector.detect(buffer, contentType);
+    async writeBuffer(buffer: Buffer, metadata: IAssetMeta = null, fileType: IFileType = null): Promise<IAsset> {
+        fileType = fileType ?? await fileTypeFromBuffer(buffer)
         metadata = metadata || {};
         buffer = await this.assetProcessor.process(buffer, metadata, fileType);
         await this.generatePreview(buffer, metadata, fileType);
         return this.upload(buffer, metadata, fileType);
     }
 
-    async writeStream(stream: Readable, metadata: IAssetMeta = null, contentType: string = null): Promise<IAsset> {
+    async writeStream(stream: Readable, metadata: IAssetMeta = null, fileType: IFileType = null): Promise<IAsset> {
         const buffer = await streamToBuffer(stream);
-        return this.writeBuffer(buffer, metadata, contentType);
+        return this.writeBuffer(buffer, metadata, fileType);
     }
 
     async writeUrl(url: string, metadata: IAssetMeta = null): Promise<IAsset> {
@@ -62,9 +60,9 @@ export class AssetsService {
         return this.writeBuffer(buffer, metadata);
     }
 
-    async download(url: string, contentType: string = null): Promise<IAsset> {
+    async download(url: string): Promise<IAsset> {
         let buffer = await fetchBuffer(url);
-        const fileType = await this.typeDetector.detect(buffer, contentType);
+        const fileType = await fileTypeFromBuffer(buffer);
         const metadata: IAssetMeta = {
             filename: url,
             extension: (fileType.ext || '').trim()
@@ -154,7 +152,7 @@ export class AssetsService {
         let preview = await this.assetProcessor.preview(buffer, metadata, fileType);
         if (!preview) return;
         const previewMeta: IAssetMeta = {};
-        const previewType = await this.typeDetector.detect(buffer, '');
+        const previewType = await fileTypeFromBuffer(buffer);
         preview = await this.assetProcessor.process(preview, previewMeta, previewType);
         const asset = await this.upload(preview, previewMeta, previewType);
         metadata.preview = asset?.oid;

@@ -1,15 +1,17 @@
-import { Buffer } from 'buffer';
 import { Injectable } from '@nestjs/common';
 import { IFileType } from '../common-types';
 import { fileTypeFromBuffer } from '../utils';
-import { IAssetTypeDetector } from './common';
+import { IAssetTypeDetector, IUploadedFile } from './common';
 
 @Injectable()
 export class AssetFileTypeService implements IAssetTypeDetector {
-    async detect(buffer: Buffer, contentType: string): Promise<IFileType> {
-        let fileType = { ext: '', mime: contentType } as IFileType;
+    async detect(file: IUploadedFile): Promise<IFileType> {
+        let fileType = {
+            ext: file.originalname.split('.').pop(),
+            mime: file.mimetype,
+        } as IFileType;
         try {
-            fileType = await fileTypeFromBuffer(buffer);
+            fileType = await fileTypeFromBuffer(file.buffer);
         } catch (e) {
             if (!fileType.mime) {
                 throw e;

@@ -119,11 +119,11 @@ export function streamToBuffer(stream: Readable): Promise<Buffer> {
     })
 }
 
-function checkTextFileType(type: IFileType): boolean {
+export function checkTextFileType(type: IFileType): boolean {
     return type.mime.indexOf("text") >= 0 || type.mime.indexOf("xml") >= 0;
 }
 
-function fixTextFileType(type: IFileType, buffer: Buffer): IFileType {
+export function fixTextFileType(type: IFileType, buffer: Buffer): IFileType {
     const text = buffer.toString("utf8");
     if (text.indexOf("<svg") >= 0) {
         return {ext: "svg", mime: "image/svg+xml"};

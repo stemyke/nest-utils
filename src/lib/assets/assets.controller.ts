@@ -21,10 +21,11 @@ import { Public } from '../decorators';
 import { formatSize } from '../utils';
 
 import {
-    IAsset,
+    ASSET_TYPE_DETECTOR,
+    IAsset, IAssetTypeDetector,
     IUploadedFile,
     IUploadFromUrlBody,
-    MAX_FILE_SIZE,
+    MAX_FILE_SIZE
 } from './common';
 import { AssetImageParams } from './asset-image-params';
 import { AssetsService } from './assets.service';
@@ -38,6 +39,7 @@ type AssetReqType = 'Image' | 'Asset';
 export class AssetsController {
 
     constructor(@Inject(MAX_FILE_SIZE) readonly maxFileSize: number,
+                @Inject(ASSET_TYPE_DETECTOR) readonly typeDetector: IAssetTypeDetector,
                 readonly assets: AssetsService,
                 readonly assetResolver: AssetResolverService) {
 
@@ -50,8 +52,11 @@ export class AssetsController {
             if (file.size > this.maxFileSize) {
                 throw new Error(`File size exceeds the max limit of '${formatSize(this.maxFileSize)}' by: ${formatSize(file.size - this.maxFileSize)}`);
             }
-            const contentType = file.mimetype === 'application/octet-stream' ? null : file.mimetype;
-            const asset = await this.assets.writeBuffer(file.buffer, {filename: file.filename}, contentType);
+            const asset = await this.assets.writeBuffer(
+                file.buffer,
+                {filename: file.filename},
+                await this.typeDetector.detect(file)
+            );
             return asset.toJSON();
         } catch (e) {
             const msg = e?.message || e || 'Unknown error';
