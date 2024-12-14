@@ -8,7 +8,7 @@ import {
     IAssetDriver,
     IAssetModuleOpts,
     IAssetTypeDetector,
-    LOCAL_DIR,
+    LOCAL_DIR, MAX_FILE_SIZE
 } from './common';
 
 import { AssetLocalDriver } from './drivers';
@@ -30,6 +30,10 @@ export function createAssetProviders(opts?: IAssetModuleOpts): Provider[] {
         detector,
         processor,
         driver,
+        {
+            provide: MAX_FILE_SIZE,
+            useValue: isNaN(opts.maxSize) ? 100 * 1024 * 1024 : opts.maxSize,
+        },
         {
             provide: LOCAL_DIR,
             useValue: opts?.localDir || 'assets_files',

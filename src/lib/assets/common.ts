@@ -3,6 +3,8 @@ import { Readable, Writable } from 'stream';
 import type { ObjectId } from 'mongodb';
 import { IFileType, IImageMeta, IImageParams } from '../common-types';
 
+export const MAX_FILE_SIZE = Symbol.for('ASSET_MAX_FILE_SIZE');
+
 export const LOCAL_DIR = Symbol.for('ASSET_LOCAL_DIR');
 
 export const ASSET_DRIVER = Symbol.for('ASSET_DRIVER');
@@ -113,9 +115,15 @@ export interface IAssetProcessor {
 }
 
 export interface IAssetModuleOpts {
+    // Local directory used to store files into when using AssetsLocalDriver
     localDir?: string;
+    // Max file size in bytes
+    maxSize?: number;
+    // Type of asset driver
     driver?: Type<IAssetDriver>;
+    // Type of asset type detector
     typeDetector?: Type<IAssetTypeDetector>;
+    // Type of asset processor
     assetProcessor?: Type<IAssetProcessor>;
 }
 

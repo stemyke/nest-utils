@@ -4,21 +4,28 @@ import {
     Controller,
     ForbiddenException,
     Get,
+    Inject,
     NotFoundException,
     Param,
     Post,
     Query,
     StreamableFile,
     UploadedFile,
-    UseInterceptors
+    UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Readable } from 'stream';
 import { isValidObjectId } from 'mongoose';
 
 import { Public } from '../decorators';
+import { formatSize } from '../utils';
 
-import { IAsset, IUploadedFile, IUploadFromUrlBody } from './common';
+import {
+    IAsset,
+    IUploadedFile,
+    IUploadFromUrlBody,
+    MAX_FILE_SIZE,
+} from './common';
 import { AssetImageParams } from './asset-image-params';
 import { AssetsService } from './assets.service';
 import { AssetResolverService } from './asset-resolver.service';
@@ -30,7 +37,9 @@ type AssetReqType = 'Image' | 'Asset';
 @UseInterceptors()
 export class AssetsController {
 
-    constructor(readonly assets: AssetsService, readonly assetResolver: AssetResolverService) {
+    constructor(@Inject(MAX_FILE_SIZE) readonly maxFileSize: number,
+                readonly assets: AssetsService,
+                readonly assetResolver: AssetResolverService) {
 
     }
 
@@ -38,12 +47,15 @@ export class AssetsController {
     @UseInterceptors(FileInterceptor('file'))
     async upload(@UploadedFile('file') file: IUploadedFile) {
         try {
+            if (file.size > this.maxFileSize) {
+                throw new Error(`File size exceeds the max limit of '${formatSize(this.maxFileSize)}' by: ${formatSize(file.size - this.maxFileSize)}`);
+            }
             const contentType = file.mimetype === 'application/octet-stream' ? null : file.mimetype;
             const asset = await this.assets.writeBuffer(file.buffer, {filename: file.filename}, contentType);
             return asset.toJSON();
         } catch (e) {
             const msg = e?.message || e || 'Unknown error';
-            throw new BadRequestException(`Asset can't be uploaded.\n${msg}`);
+            throw new BadRequestException(`Asset can't be uploaded: ${msg}`);
         }
     }
 

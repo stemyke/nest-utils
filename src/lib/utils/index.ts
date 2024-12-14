@@ -1,5 +1,7 @@
 export {
     tempDirectory,
+    formatSize,
+    tempPath,
     tempWrite,
     generateVideoThumbnail,
     copyStream,

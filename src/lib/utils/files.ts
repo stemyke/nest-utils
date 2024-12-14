@@ -46,6 +46,17 @@ class ReadableStreamClone extends Readable {
     }
 }
 
+const fileSizeNames = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
+
+export function formatSize(size: number): string {
+    let index = 0;
+    while (size > 1024) {
+        size /= 1024;
+        index++;
+    }
+    return `${size.toFixed(2)} ${fileSizeNames[index]}`;
+}
+
 export async function tempPath(filePath: string) {
     const path = join(tempDirectory, randomUUID(), filePath);
     await mkdir(dirname(path), { recursive: true });
