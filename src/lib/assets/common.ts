@@ -35,9 +35,30 @@ export interface IUploadedFile {
     buffer: Buffer;
 }
 
+export interface IUploadFromUrlBody {
+    url: string;
+}
+
+export interface IStreamableOptions {
+    /**
+     * The value that will be used for the `Content-Type` response header.
+     * @default `"application/octet-stream"`
+     */
+    type?: string;
+    /**
+     * The value that will be used for the `Content-Disposition` response header.
+     */
+    disposition?: string;
+    /**
+     * The value that will be used for the `Content-Length` response header.
+     */
+    length?: number;
+}
+
 export interface IAssetMeta extends IImageMeta {
     filename?: string;
     extension?: string;
+    length?: number;
     classified?: boolean;
     downloadCount?: number;
     firstDownload?: Date;
@@ -72,6 +93,7 @@ export interface IAssetUploadStream extends Writable {
 
 export interface IAssetUploadOpts {
     chunkSizeBytes?: number;
+    contentType?: string;
     metadata?: IAssetMeta;
 }
 
@@ -91,8 +113,8 @@ export interface IAssetProcessor {
 }
 
 export interface IAssetModuleOpts {
-    driver?: 'local' | 'grid';
     localDir?: string;
+    driver?: Type<IAssetDriver>;
     typeDetector?: Type<IAssetTypeDetector>;
     assetProcessor?: Type<IAssetProcessor>;
 }

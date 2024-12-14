@@ -18,14 +18,16 @@ import { isValidObjectId } from 'mongoose';
 
 import { Public } from '../decorators';
 
-import { IAsset, IUploadedFile } from './common';
+import { IAsset, IUploadedFile, IUploadFromUrlBody } from './common';
 import { AssetImageParams } from './asset-image-params';
 import { AssetsService } from './assets.service';
 import { AssetResolverService } from './asset-resolver.service';
+import { SeekableInterceptor } from './interceptors';
 
 type AssetReqType = 'Image' | 'Asset';
 
 @Controller('assets')
+@UseInterceptors()
 export class AssetsController {
 
     constructor(readonly assets: AssetsService, readonly assetResolver: AssetResolverService) {
@@ -46,7 +48,7 @@ export class AssetsController {
     }
 
     @Post('url')
-    async uploadUrl(@Body() body: any) {
+    async uploadUrl(@Body() body: IUploadFromUrlBody) {
         try {
             const asset = await this.assets.writeUrl(body.url, body);
             return asset.toJSON();
@@ -58,6 +60,7 @@ export class AssetsController {
 
     @Public()
     @Get('/:id')
+    @UseInterceptors(SeekableInterceptor)
     async getFile(@Param('id') id: string, @Query('lazy') lazy: boolean) {
         const asset = await this.getAsset('Asset', id, lazy);
         return this.streamResponse(asset.download(), asset);
@@ -65,6 +68,7 @@ export class AssetsController {
 
     @Public()
     @Get('/by-name/:name')
+    @UseInterceptors(SeekableInterceptor)
     async getFileByName(@Param('name') name: string) {
         const asset = await this.getAssetByName('Asset', name);
         return this.streamResponse(asset.download(), asset);
@@ -141,7 +145,8 @@ export class AssetsController {
         // });
         return new StreamableFile(stream, {
             disposition: !ext ? null : `inline; filename=${asset.filename}.${ext}`,
-            type: asset.contentType
+            type: asset.contentType,
+            length: asset.metadata.length,
         });
     }
 }

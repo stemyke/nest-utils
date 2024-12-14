@@ -8,7 +8,6 @@ import { IAssetDriver, IAssetUploadOpts, IAssetUploadStream, LOCAL_DIR } from '.
 
 @Injectable()
 export class AssetLocalDriver implements IAssetDriver {
-    readonly metaCollection: string;
 
     constructor(@Inject(LOCAL_DIR) protected dir: string) {}
 

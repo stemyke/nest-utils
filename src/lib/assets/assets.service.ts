@@ -115,11 +115,13 @@ export class AssetsService {
             lastDownload: null
         }, metadata || {});
         metadata.filename = metadata.filename || new Types.ObjectId().toHexString();
+        metadata.length = buffer.length;
         metadata.extension = (fileType.ext || '').trim();
         return new Promise<IAsset>((resolve, reject) => {
             try {
                 const uploaderStream = this.driver.openUploadStream(metadata.filename, {
                     chunkSizeBytes: 1048576,
+                    contentType,
                     metadata
                 });
                 bufferToStream(buffer).pipe(uploaderStream)

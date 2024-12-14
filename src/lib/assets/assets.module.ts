@@ -10,20 +10,18 @@ import {
     IAssetTypeDetector,
     LOCAL_DIR,
 } from './common';
+
+import { AssetLocalDriver } from './drivers';
+import { SeekableInterceptor } from './interceptors';
+
 import { AssetsController } from './assets.controller';
 import { AssetsService } from './assets.service';
 import { AssetResolverService } from './asset-resolver.service';
 import { AssetProcessorService } from './asset-processor.service';
-import { AssetGridDriver, AssetLocalDriver } from './drivers';
 import { AssetFileTypeService } from './asset-file-type.service';
 
 export function createAssetProviders(opts?: IAssetModuleOpts): Provider[] {
-    let driver: Type<IAssetDriver> = AssetLocalDriver;
-    switch (opts?.driver) {
-        case 'grid':
-            driver = AssetGridDriver;
-            break;
-    }
+    const driver: Type<IAssetDriver> = opts?.driver || AssetLocalDriver;
     const detector: Type<IAssetTypeDetector> =
         opts?.typeDetector || AssetFileTypeService;
     const processor = opts?.assetProcessor || AssetProcessorService;
@@ -51,7 +49,10 @@ export function createAssetProviders(opts?: IAssetModuleOpts): Provider[] {
     ];
 }
 
-const providers = [AssetResolverService];
+const providers = [
+    AssetResolverService,
+    SeekableInterceptor
+];
 
 @Module({
     providers,

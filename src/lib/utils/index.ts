@@ -1,4 +1,24 @@
 export {
+    tempDirectory,
+    tempWrite,
+    generateVideoThumbnail,
+    copyStream,
+    fetchBuffer,
+    bufferToStream,
+    streamToBuffer,
+    fileTypeFromBuffer,
+    fileTypeFromStream,
+    toImage
+} from "./files";
+
+export {
+    IParsedRange,
+    IParsedRanges,
+    IParseRangeOpts,
+    parseRange
+} from './headers';
+
+export {
     isNullOrUndefined,
     isDefined,
     getType,
@@ -19,20 +39,11 @@ export {
 } from "./misc";
 
 export {
-    tempDirectory,
-    tempWrite,
-    generateVideoThumbnail,
-    copyStream,
-    fetchBuffer,
-    bufferToStream,
-    streamToBuffer,
-    fileTypeFromBuffer,
-    fileTypeFromStream,
-    toImage
-} from "./files";
-
-export {
     idToString,
     createTransformer,
     paginate
 } from "./mongo";
+
+export {
+    rangeStream
+} from "./streams";
