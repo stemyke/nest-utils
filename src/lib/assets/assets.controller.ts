@@ -35,7 +35,6 @@ import { SeekableInterceptor } from './interceptors';
 type AssetReqType = 'Image' | 'Asset';
 
 @Controller('assets')
-@UseInterceptors()
 export class AssetsController {
 
     constructor(@Inject(MAX_FILE_SIZE) readonly maxFileSize: number,
@@ -156,10 +155,6 @@ export class AssetsController {
     protected async streamResponse(promise: Promise<Readable>, asset: IAsset): Promise<StreamableFile> {
         const stream = await promise;
         const ext = asset.metadata?.extension;
-        // console.log(`sending streamable file`, typeof stream, {
-        //     disposition: !ext ? null : `inline; filename=${asset.filename}.${ext}`,
-        //     type: asset.contentType
-        // });
         return new StreamableFile(stream, {
             disposition: !ext ? null : `inline; filename=${asset.filename}.${ext}`,
             type: asset.contentType,

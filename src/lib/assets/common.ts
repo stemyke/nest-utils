@@ -129,7 +129,7 @@ export interface IAssetModuleOpts {
 
 export const imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml'];
 
-export const videoTypes = ['video/mp4', 'video/mpeg', 'video/ogg', 'video/x-msvideo'];
+export const videoTypes = ['video/mp4', 'video/webm', 'video/ogg'];
 
 export const fontTypes = [
     'application/font-woff', 'application/font-woff2', 'application/x-font-opentype', 'application/x-font-truetype', 'application/x-font-datafork',
