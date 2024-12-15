@@ -22,10 +22,11 @@ import { formatSize } from '../utils';
 
 import {
     ASSET_TYPE_DETECTOR,
-    IAsset, IAssetTypeDetector,
+    IAsset,
+    IAssetTypeDetector,
     IUploadedFile,
     IUploadFromUrlBody,
-    MAX_FILE_SIZE
+    MAX_FILE_SIZE,
 } from './common';
 import { AssetImageParams } from './asset-image-params';
 import { AssetsService } from './assets.service';
@@ -35,25 +36,29 @@ import { SeekableInterceptor } from './interceptors';
 type AssetReqType = 'Image' | 'Asset';
 
 @Controller('assets')
+@UseInterceptors(SeekableInterceptor)
 export class AssetsController {
-
-    constructor(@Inject(MAX_FILE_SIZE) readonly maxFileSize: number,
-                @Inject(ASSET_TYPE_DETECTOR) readonly typeDetector: IAssetTypeDetector,
-                readonly assets: AssetsService,
-                readonly assetResolver: AssetResolverService) {
-
-    }
+    constructor(
+        @Inject(MAX_FILE_SIZE) readonly maxFileSize: number,
+        @Inject(ASSET_TYPE_DETECTOR) readonly typeDetector: IAssetTypeDetector,
+        readonly assets: AssetsService,
+        readonly assetResolver: AssetResolverService
+    ) {}
 
     @Post('')
     @UseInterceptors(FileInterceptor('file'))
     async upload(@UploadedFile('file') file: IUploadedFile) {
         try {
             if (file.size > this.maxFileSize) {
-                throw new Error(`File size exceeds the max limit of '${formatSize(this.maxFileSize)}' by: ${formatSize(file.size - this.maxFileSize)}`);
+                throw new Error(
+                    `File size exceeds the max limit of '${formatSize(
+                        this.maxFileSize
+                    )}' by: ${formatSize(file.size - this.maxFileSize)}`
+                );
             }
             const asset = await this.assets.writeBuffer(
                 file.buffer,
-                {filename: file.filename},
+                { filename: file.filename },
                 await this.typeDetector.detect(file)
             );
             return asset.toJSON();
@@ -76,7 +81,6 @@ export class AssetsController {
 
     @Public()
     @Get('/:id')
-    @UseInterceptors(SeekableInterceptor)
     async getFile(@Param('id') id: string, @Query('lazy') lazy: boolean) {
         const asset = await this.getAsset('Asset', id, lazy);
         return this.streamResponse(asset.download(), asset);
@@ -84,7 +88,6 @@ export class AssetsController {
 
     @Public()
     @Get('/by-name/:name')
-    @UseInterceptors(SeekableInterceptor)
     async getFileByName(@Param('name') name: string) {
         const asset = await this.getAssetByName('Asset', name);
         return this.streamResponse(asset.download(), asset);
@@ -92,7 +95,11 @@ export class AssetsController {
 
     @Public()
     @Get('/image/:id/:rotation')
-    async getImageRotation(@Param('id') id: string, @Query() params: AssetImageParams, @Param('rotation') rotation: number) {
+    async getImageRotation(
+        @Param('id') id: string,
+        @Query() params: AssetImageParams,
+        @Param('rotation') rotation: number
+    ) {
         const asset = await this.getAsset('Image', id, params.lazy);
         if (rotation !== 0) {
             params.rotation = params.rotation || rotation;
@@ -108,14 +115,20 @@ export class AssetsController {
 
     @Public()
     @Get('/image/by-name/:name')
-    async getImageByName(@Param('name') name: string, @Query() params: AssetImageParams) {
+    async getImageByName(
+        @Param('name') name: string,
+        @Query() params: AssetImageParams
+    ) {
         const asset = await this.getAssetByName('Image', name);
         return this.streamResponse(asset.downloadImage(params), asset);
     }
 
     @Public()
     @Get('/metadata/:id')
-    async getMetadata(@Param('id') id: string, @Query('lazy') lazy: boolean): Promise<any> {
+    async getMetadata(
+        @Param('id') id: string,
+        @Query('lazy') lazy: boolean
+    ): Promise<any> {
         const asset = await this.assetResolver.resolve(id, lazy);
         if (!asset) {
             throw new BadRequestException(`Asset with id: '${id}' not found.`);
@@ -123,40 +136,64 @@ export class AssetsController {
         return asset.metadata;
     }
 
-    protected async getAsset(type: AssetReqType, id: string, lazy: boolean): Promise<IAsset> {
+    protected async getAsset(
+        type: AssetReqType,
+        id: string,
+        lazy: boolean
+    ): Promise<IAsset> {
         if (!isValidObjectId(id)) {
             throw new BadRequestException(`Invalid object id provided: ${id}`);
         }
         const asset = await this.assetResolver.resolve(id, lazy);
         if (!asset) {
-            throw new BadRequestException(`${type} with id: '${id}' not found.`);
+            throw new BadRequestException(
+                `${type} with id: '${id}' not found.`
+            );
         }
         return this.resolveFinalAsset(type, asset);
     }
 
-    protected async getAssetByName(type: AssetReqType, filename: string): Promise<IAsset> {
-        const asset = await this.assets.find({filename});
+    protected async getAssetByName(
+        type: AssetReqType,
+        filename: string
+    ): Promise<IAsset> {
+        const asset = await this.assets.find({ filename });
         if (!asset) {
-            throw new NotFoundException(`${type} with filename: '${filename}' not found.`);
+            throw new NotFoundException(
+                `${type} with filename: '${filename}' not found.`
+            );
         }
         return this.resolveFinalAsset(type, asset);
     }
 
-    protected async resolveFinalAsset(type: AssetReqType, asset: IAsset): Promise<IAsset> {
+    protected async resolveFinalAsset(
+        type: AssetReqType,
+        asset: IAsset
+    ): Promise<IAsset> {
         if (asset.metadata?.classified) {
-            throw new ForbiddenException(`${type} is classified, and can be only downloaded from a custom url.`);
+            throw new ForbiddenException(
+                `${type} is classified, and can be only downloaded from a custom url.`
+            );
         }
         if (type == 'Image' && asset.metadata.preview) {
-            return this.resolveFinalAsset(type, await this.assetResolver.resolve(asset.metadata.preview));
+            return this.resolveFinalAsset(
+                type,
+                await this.assetResolver.resolve(asset.metadata.preview)
+            );
         }
         return asset;
     }
 
-    protected async streamResponse(promise: Promise<Readable>, asset: IAsset): Promise<StreamableFile> {
+    protected async streamResponse(
+        promise: Promise<Readable>,
+        asset: IAsset
+    ): Promise<StreamableFile> {
         const stream = await promise;
         const ext = asset.metadata?.extension;
         return new StreamableFile(stream, {
-            disposition: !ext ? null : `inline; filename=${asset.filename}.${ext}`,
+            disposition: !ext
+                ? null
+                : `inline; filename=${asset.filename}.${ext}`,
             type: asset.contentType,
             length: asset.metadata.length,
         });

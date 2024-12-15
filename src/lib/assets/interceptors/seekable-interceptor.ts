@@ -19,8 +19,14 @@ export class SeekableInterceptor implements NestInterceptor {
         const headers = (req.headers || {}) as Record<string, string>;
         return next.handle().pipe(map(data => {
             if (data instanceof StreamableFile) {
-                const opts = data.options;
-                if (!opts.length || !headers.range) return data;
+                const opts = Object.assign({}, data.options);
+                if (!opts.length || !headers.range) {
+                    delete opts.length;
+                    return new StreamableFile(
+                        data.getStream(),
+                        opts
+                    );
+                }
                 const ranges = parseRange(opts.length, headers.range);
                 if (ranges === -2) {
                     throw new BadRequestException(`Malformed range: ${headers.range}`);
@@ -40,12 +46,10 @@ export class SeekableInterceptor implements NestInterceptor {
                 res.status(206);
                 res.set('Content-Range', 'bytes ' + start + '-' + end + '/' + opts.length);
                 // slicing the stream to partial content
+                opts.length = (end - start) + 1;
                 return new StreamableFile(
                     data.getStream().pipe(rangeStream(start, end)),
-                    {
-                        ...opts,
-                        length: (end - start) + 1
-                    }
+                    opts
                 );
             }
             return data;
