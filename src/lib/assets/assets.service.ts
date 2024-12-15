@@ -113,7 +113,7 @@ export class AssetsService {
             lastDownload: null
         }, metadata || {});
         metadata.filename = metadata.filename || new Types.ObjectId().toHexString();
-        metadata.length = buffer.length;
+        metadata.length = Buffer.byteLength(buffer);
         metadata.extension = (fileType.ext || '').trim();
         return new Promise<IAsset>((resolve, reject) => {
             try {
