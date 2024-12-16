@@ -45,6 +45,7 @@ export {
 
 export {
     idToString,
+    compareId,
     createTransformer,
     paginate
 } from "./mongo";

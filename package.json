@@ -1,6 +1,6 @@
 {
     "name": "@stemy/nest-utils",
-    "version": "0.2.5",
+    "version": "0.2.6",
     "license": "MIT",
     "scripts": {
         "build": "nx build",

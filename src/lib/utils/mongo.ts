@@ -1,8 +1,7 @@
 import { FilterQuery, HydratedDocument, Model, Query, Types } from 'mongoose';
 
 import { IPagination, IPaginationParams } from '../common-types';
-import { isString, isFunction } from './misc';
-import type { GridFSBucket } from 'mongodb';
+import { isFunction, isString } from './misc';
 
 export function idToString(value: any): any {
     if (Array.isArray(value)) {
@@ -10,7 +9,13 @@ export function idToString(value: any): any {
     }
     return value instanceof Types.ObjectId
         ? value.toHexString()
-        : (isString(value) ? value : value || null);
+        : isString(value)
+        ? value
+        : value || null;
+}
+
+export function compareId(a: Types.ObjectId | string, b: Types.ObjectId | string): boolean {
+    return idToString(a) === idToString(b);
 }
 
 export function createTransformer<T = any>(transform?: (doc: HydratedDocument<T>, ret: any, options?: any) => any) {
