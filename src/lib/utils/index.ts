@@ -25,6 +25,7 @@ export {
 export {
     isNullOrUndefined,
     isDefined,
+    transformValues,
     getType,
     isObject,
     isArray,

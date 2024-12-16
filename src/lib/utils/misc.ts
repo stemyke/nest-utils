@@ -11,6 +11,16 @@ export function isDefined(value: any): boolean {
     return !isNullOrUndefined(value);
 }
 
+export function transformValues(
+    value: any,
+    transformer: (value: any) => any
+): any {
+    if (Array.isArray(value)) {
+        return value.map((v) => transformValues(v, transformer));
+    }
+    return isNullOrUndefined(value) ? value : transformer(value);
+}
+
 export function getType(obj: any): string {
     const regex = new RegExp('\\s([a-zA-Z]+)');
     return Object.prototype.toString.call(obj).match(regex)[1].toLowerCase();

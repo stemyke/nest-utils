@@ -1,6 +1,6 @@
 {
     "name": "@stemy/nest-utils",
-    "version": "0.2.4",
+    "version": "0.2.5",
     "license": "MIT",
     "scripts": {
         "build": "nx build",
@@ -14,6 +14,7 @@
         "@nestjs/platform-express": "^10.0.0",
         "mongoose": "^8.8.3",
         "class-validator": "^0.14.1",
+        "class-transformer": "^0.5.1",
         "node-fetch-cjs": "^3.3.2",
         "sharp": "^0.33.5",
         "fontkit": "^1.9.0",
@@ -27,6 +28,7 @@
         "@nestjs/platform-express": "^10.0.0",
         "mongoose": "^8.8.3",
         "class-validator": "^0.14.1",
+        "class-transformer": "^0.5.1",
         "node-fetch-cjs": "^3.3.2",
         "sharp": "^0.33.5",
         "fontkit": "^1.9.0",
