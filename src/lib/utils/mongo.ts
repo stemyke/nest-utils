@@ -18,6 +18,12 @@ export function compareId(a: Types.ObjectId | string, b: Types.ObjectId | string
     return idToString(a) === idToString(b);
 }
 
+export async function setAndUpdate<T, D extends HydratedDocument<Partial<T>>>(doc: D, data: Partial<T>): Promise<D> {
+    doc.set(data);
+    await doc.save();
+    return doc;
+}
+
 export function createTransformer<T = any>(transform?: (doc: HydratedDocument<T>, ret: any, options?: any) => any) {
     return (doc: HydratedDocument<T>, ret: any, options?: any) => {
         ret.id = idToString(ret.id) || ret.id;
