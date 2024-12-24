@@ -31,20 +31,21 @@ export class EntityPipe implements PipeTransform<HydratedDocument<any>> {
         const req = ctx.switchToHttp().getRequest();
         const name = type.name.charAt(0).toLowerCase() + type.name.substring(1);
         const id = req.params[`${name}Id`] || req.params[idField];
-        if (!isValidObjectId(id)) {
-            if (throwError) {
-                throw new BadRequestException(`Invalid id provided for resolving ${type.name} entity: ${id}`);
-            }
-            return null;
-        }
-        const doc = await model.findById(id) ?? (idField !== 'id' ? await model.findOne({[idField]: id}) : null);
-        if (!doc) {
-            if (throwError) {
+        try {
+            const doc = (idField !== 'id' ? await model.findOne({[idField]: id}) : null) || await model.findById(id);
+            if (!doc) {
                 throw new NotFoundException(`${type.name} entity could not be found by id: ${id}`);
             }
-            return null;
+            req.entity = doc;
+            return doc;
+        } catch (e) {
+            if (throwError) {
+                if (e instanceof Error && e.message.includes('Cast to ObjectId failed')) {
+                    throw new BadRequestException(`Maybe an invalid id provided for resolving ${type.name} entity: ${id}`);
+                }
+                throw e;
+            }
         }
-        req.entity = doc;
-        return doc;
+        return null;
     }
 }
