@@ -6,8 +6,8 @@ import {
     PipeTransform,
     Type,
 } from '@nestjs/common';
-import { Connection, HydratedDocument, isValidObjectId, Model } from 'mongoose';
 import { InjectConnection } from '@nestjs/mongoose';
+import { Connection, HydratedDocument, isValidObjectId, Model } from 'mongoose';
 
 export interface EntityContext {
     type: Type;
@@ -37,13 +37,14 @@ export class EntityPipe implements PipeTransform<HydratedDocument<any>> {
             }
             return null;
         }
-        const doc = model.findById(id);
+        const doc = await model.findById(id) ?? (idField !== 'id' ? await model.findOne({[idField]: id}) : null);
         if (!doc) {
             if (throwError) {
                 throw new NotFoundException(`${type.name} entity could not be found by id: ${id}`);
             }
             return null;
         }
+        req.entity = doc;
         return doc;
     }
 }
