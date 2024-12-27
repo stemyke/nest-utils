@@ -2,7 +2,7 @@ import { Readable } from 'stream';
 import type { ObjectId } from 'mongodb';
 import { Types } from 'mongoose';
 import { IImageParams } from '../../common-types';
-import { bufferToStream, toImage } from '../../utils';
+import { streamToBuffer, toImage } from '../../utils';
 import { IAsset, IAssetMeta } from '../common';
 
 export class TempAsset implements IAsset {
@@ -10,11 +10,7 @@ export class TempAsset implements IAsset {
     readonly oid: ObjectId;
     readonly id: string;
 
-    get stream(): Readable {
-        return bufferToStream(this.buffer);
-    }
-
-    constructor(protected buffer: Buffer, readonly filename: string, readonly contentType: string, readonly metadata: IAssetMeta) {
+    constructor(readonly stream: Readable, readonly filename: string, readonly contentType: string, readonly metadata: IAssetMeta) {
         this.oid = new Types.ObjectId();
         this.id = this.oid.toHexString();
     }
@@ -28,10 +24,11 @@ export class TempAsset implements IAsset {
     }
 
     async getBuffer(): Promise<Buffer> {
-        return this.buffer;
+        return streamToBuffer(this.stream);
     }
 
     async download(metadata?: IAssetMeta): Promise<Readable> {
+        Object.assign(this.metadata, metadata || {});
         return this.stream;
     }
 
