@@ -1,18 +1,25 @@
 import { Readable } from 'stream';
+import { Buffer } from 'buffer';
 import type { ObjectId } from 'mongodb';
 import { Types } from 'mongoose';
 import { IImageParams } from '../../common-types';
-import { streamToBuffer, toImage } from '../../utils';
+import { bufferToStream, streamToBuffer, toImage } from '../../utils';
 import { IAsset, IAssetMeta } from '../common';
 
 export class TempAsset implements IAsset {
 
     readonly oid: ObjectId;
     readonly id: string;
+    readonly stream: Readable
 
-    constructor(readonly stream: Readable, readonly filename: string, readonly contentType: string, readonly metadata: IAssetMeta) {
+    protected buffer: Buffer;
+
+    constructor(src: Readable | Buffer, readonly filename: string, readonly contentType: string, readonly metadata: IAssetMeta) {
         this.oid = new Types.ObjectId();
         this.id = this.oid.toHexString();
+        this.stream = src instanceof Buffer
+            ? bufferToStream(src) : src as Readable;
+        this.buffer = src instanceof Buffer ? src : null;
     }
 
     async unlink(): Promise<string> {
@@ -24,7 +31,8 @@ export class TempAsset implements IAsset {
     }
 
     async getBuffer(): Promise<Buffer> {
-        return streamToBuffer(this.stream);
+        this.buffer = this.buffer || await streamToBuffer(this.stream);
+        return this.buffer;
     }
 
     async download(metadata?: IAssetMeta): Promise<Readable> {

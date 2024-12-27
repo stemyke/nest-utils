@@ -68,7 +68,7 @@ export class AssetsService {
             extension: (fileType.ext || '').trim()
         };
         buffer = await this.assetProcessor.process(buffer, metadata, fileType);
-        return new TempAsset(bufferToStream(buffer), url, fileType.mime, metadata);
+        return new TempAsset(buffer, url, fileType.mime, metadata);
     }
 
     async read(id: string | ObjectId): Promise<IAsset> {
