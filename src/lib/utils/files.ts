@@ -7,7 +7,7 @@ import { join, dirname, basename } from 'path';
 import { randomUUID } from 'crypto';
 import ffmpeg from 'fluent-ffmpeg';
 import Mimetics from 'mimetics';
-import fetch from 'node-fetch-cjs';
+import axios from 'axios';
 import {
     IFileType,
     IImageCropInfo,
@@ -93,9 +93,8 @@ export function copyStream(stream: Readable, opts?: ReadableOptions): Readable {
 }
 
 export async function fetchBuffer(url: string): Promise<Buffer> {
-    const res = await fetch(url);
-    const arrayBuffer = await res.arrayBuffer();
-    return Buffer.from(arrayBuffer);
+    const res = await axios.get(url, {responseType: 'arraybuffer'});
+    return Buffer.from(res.data);
 }
 
 export function bufferToStream(buffer: Buffer): Readable {
