@@ -48,7 +48,7 @@ export class AssetsService {
         return this.writeBuffer(buffer, metadata, fileType);
     }
 
-    async writeUrl(url: string, metadata: IAssetMeta = null): Promise<IAsset> {
+    async writeUrl(url: string, metadata: IAssetMeta = null, fileType: IFileType = null): Promise<IAsset> {
         metadata = metadata || {};
         metadata.filename = metadata.filename || url;
         metadata.url = url;
@@ -57,7 +57,7 @@ export class AssetsService {
         const asset = await this.find({'metadata.url': url, 'metadata.uploadTime': {$gt: metadata.uploadTime - oneWeek}});
         if (asset) return asset;
         const buffer = await fetchBuffer(url);
-        return this.writeBuffer(buffer, metadata);
+        return this.writeBuffer(buffer, metadata, fileType);
     }
 
     async download(url: string): Promise<IAsset> {
