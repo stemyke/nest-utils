@@ -1,7 +1,26 @@
 import { readdir, stat } from 'fs/promises';
 import { join } from 'path';
 import { EOL } from 'os';
-import { Type } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
+import {
+    DynamicModule,
+    Inject,
+    Injectable,
+    InjectionToken,
+    Provider,
+    Type,
+} from '@nestjs/common';
+import {
+    AsyncOptions,
+    AsyncOptionsProvider,
+    AsyncProviders,
+    Callable,
+    Constructor,
+    FactoryToken,
+    FromOptionsFactory,
+    IModuleOptionsFactory,
+    IModuleOptionsProvider,
+} from '../common-types';
 
 export function isNullOrUndefined(value: any): boolean {
     return value == null || typeof value == 'undefined';
@@ -55,12 +74,13 @@ export function isString(value: any): value is string {
     return typeof value === 'string';
 }
 
-export function isFunction(value: any): value is Function {
+export function isFunction(value: any): value is Callable {
     return typeof value === 'function';
 }
 
-export function isConstructor(value: any): boolean {
-    return (value && typeof value === 'function' && value.prototype && value.prototype.constructor) === value && value.name !== 'Object';
+export function isConstructor(value: any): value is Type {
+    return (value && typeof value === 'function' && value.prototype && value.prototype.constructor) === value
+        && value.name !== 'Object';
 }
 
 export function isType(value: any): value is Type {
@@ -70,12 +90,13 @@ export function isType(value: any): value is Type {
 export function isInterface(obj: any, interFaceObject: { [key: string]: string }): boolean {
     if (!obj || typeof obj !== 'object' || isArray(obj) || !isObject(interFaceObject)) return false;
     const keys = Object.keys(interFaceObject);
+    const hasOwnProperty = Object.prototype.hasOwnProperty;
     for (const key of keys) {
         let type = interFaceObject[key] || '';
         if (type.startsWith('*')) {
-            type = type.substr(1);
-            if (obj.hasOwnProperty(key) && getType(obj[key]) !== type) return false;
-        } else if (!obj.hasOwnProperty(key) || getType(obj[key]) !== type) {
+            type = type.substring(1);
+            if (hasOwnProperty.call(obj, key) && getType(obj[key]) !== type) return false;
+        } else if (!hasOwnProperty.call(obj, key) || getType(obj[key]) !== type) {
             return false;
         }
     }
@@ -114,4 +135,134 @@ export function getEOL(text: string): string {
         return EOL; // use the OS default
     }
     return u > w ? '\n' : '\r\n';
+}
+
+function createAsyncOptionsProvider<T extends AsyncOptions>(
+    token: InjectionToken, opts: IModuleOptionsProvider<T>
+): AsyncOptionsProvider<T> {
+    if (opts.useFactory) {
+        return {
+            provide: token,
+            useFactory: opts.useFactory,
+            inject: opts.inject || [],
+        };
+    }
+    const inject = [
+        (opts.useClass || opts.useExisting),
+    ];
+    return {
+        provide: token,
+        useFactory: async (factory: IModuleOptionsFactory<T>) => await factory.createOptions(),
+        inject,
+    };
+}
+
+export function createAsyncProviders<T extends AsyncOptions>(
+    token: InjectionToken<T>, opts: IModuleOptionsProvider<T>
+): AsyncProviders<T> {
+    if (opts.useExisting || opts.useFactory) {
+        return [createAsyncOptionsProvider(token, opts)];
+    }
+    const useClass = opts.useClass;
+    return [
+        createAsyncOptionsProvider(token, opts),
+        {
+            provide: useClass,
+            useClass,
+        },
+    ];
+}
+
+const FROM_OPTIONS_TOKEN = Symbol.for("FROM_OPTIONS_TOKEN");
+
+@Injectable()
+class FromOptionsResolver<O extends AsyncOptions = AsyncOptions> {
+    constructor(@Inject(FROM_OPTIONS_TOKEN) protected options: O,
+                protected moduleRef: ModuleRef) {
+    }
+
+    resolve<T>(factory: FromOptionsFactory<O, Type<T>>): T {
+        const type = factory(this.options);
+        return this.moduleRef.get(type);
+    }
+}
+
+export class FromOptionsProviders<O extends AsyncOptions> {
+
+    protected providers: Provider[];
+
+    constructor(protected token: FactoryToken<O>) {
+        this.providers = [
+            {
+                provide: FROM_OPTIONS_TOKEN,
+                useFactory: opts => opts,
+                inject: [token]
+            },
+            FromOptionsResolver
+        ];
+    }
+
+    add(...providers: Provider[]) {
+        this.providers.push(...providers);
+        return this;
+    }
+
+    useValue<T>(provide: FactoryToken<T>, useFactory: FromOptionsFactory<O, T>) {
+        return this.add({
+            provide,
+            useFactory,
+            inject: [this.token]
+        });
+    }
+
+    useType<T>(provide: FactoryToken<T>, factory: FromOptionsFactory<O, Type<T>>) {
+        return this.add({
+            provide,
+            useFactory: (opts: FromOptionsResolver<O>) => opts.resolve(factory),
+            inject: [FromOptionsResolver]
+        });
+    }
+
+    asArray(): Provider[] {
+        return Array.from(this.providers);
+    }
+}
+
+export function createRootModule<O extends AsyncOptions, M extends Constructor<any>>(
+    module: M,
+    token: FactoryToken<O>,
+    opts: O,
+    providers: Provider[],
+    global: boolean = true
+): DynamicModule {
+    return {
+        providers: [
+            {
+                provide: token,
+                useValue: opts || {}
+            },
+            ...providers
+        ],
+        exports: providers,
+        module,
+        global,
+    };
+}
+
+export function createRootModuleAsync<O extends AsyncOptions, M extends Type>(
+    module: M,
+    token: FactoryToken<O>,
+    opts: IModuleOptionsProvider<O>,
+    providers: Provider[],
+    global: boolean = true
+): DynamicModule {
+    return {
+        providers: [
+            ...createAsyncProviders(token, opts),
+            ...providers
+        ],
+        exports: providers,
+        module,
+        global,
+    };
 }

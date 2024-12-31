@@ -1,17 +1,7 @@
-import { Type } from '@nestjs/common';
+import { InjectionToken, Type } from '@nestjs/common';
 import { Readable, Writable } from 'stream';
 import type { ObjectId } from 'mongodb';
-import { IFileType, IImageMeta, IImageParams } from '../common-types';
-
-export const MAX_FILE_SIZE = Symbol.for('ASSET_MAX_FILE_SIZE');
-
-export const LOCAL_DIR = Symbol.for('ASSET_LOCAL_DIR');
-
-export const ASSET_DRIVER = Symbol.for('ASSET_DRIVER');
-
-export const ASSET_TYPE_DETECTOR = Symbol.for('ASSET_TYPE_DETECTOR');
-
-export const ASSET_PROCESSOR = Symbol.for('ASSET_PROCESSOR');
+import { FactoryToken, IFileType, IImageMeta, IImageParams } from '../common-types';
 
 export interface IUploadedFile {
     /** Name of the form field associated with this file. */
@@ -142,3 +132,15 @@ export const fontProps = [
     'underlinePosition', 'underlineThickness', 'italicAngle', 'capHeight',
     'xHeight', 'numGlyphs', 'characterSet', 'availableFeatures'
 ];
+
+export const MAX_FILE_SIZE: FactoryToken<number> = Symbol.for('ASSET_MAX_FILE_SIZE');
+
+export const LOCAL_DIR: FactoryToken<string> = Symbol.for('ASSET_LOCAL_DIR');
+
+export const ASSET_DRIVER: FactoryToken<IAssetDriver> = Symbol.for('ASSET_DRIVER');
+
+export const ASSET_TYPE_DETECTOR: FactoryToken<IAssetTypeDetector> = Symbol.for('ASSET_TYPE_DETECTOR');
+
+export const ASSET_PROCESSOR: FactoryToken<IAssetProcessor> = Symbol.for('ASSET_PROCESSOR');
+
+export const ASSET_MODULE_OPTIONS: FactoryToken<IAssetModuleOpts> = Symbol.for('ASSET_MODULE_OPTIONS');

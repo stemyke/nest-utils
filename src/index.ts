@@ -4,6 +4,9 @@ export * from './lib/pipes';
 export * from './lib/utils';
 
 export {
+    FactoryToken,
+    Callable,
+    Constructor,
     InferGeneric,
     KeysOfType,
     OnlyOfType,
@@ -11,7 +14,15 @@ export {
     IPaginationMeta,
     IPagination,
     IImageCropInfo,
+    IImageMeta,
     IImageParams,
     IFileType,
-    FontFormat
+    FontFormat,
+    AsyncOptions,
+    AsyncOptionsProvider,
+    AsyncOptionsTypeProvider,
+    AsyncProviders,
+    FromOptionsFactory,
+    IModuleOptionsFactory,
+    IModuleOptionsProvider
 } from './lib/common-types';

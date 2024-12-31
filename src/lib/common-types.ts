@@ -1,6 +1,29 @@
-import { Type } from '@nestjs/common';
+import {
+    ClassProvider,
+    ExistingProvider,
+    FactoryProvider,
+    Type,
+} from '@nestjs/common';
 import { Types } from 'mongoose';
-import { Readable, Writable } from 'stream';
+
+// Use this to ensure return types
+export type FactoryToken<R = any> = symbol & { __type?: R };
+
+interface Func {
+    apply(this: Callable, thisArg: any, argArray?: any): any;
+    call(this: Callable, thisArg: any, ...argArray: any[]): any;
+
+    prototype: any;
+    readonly length: number;
+}
+
+export interface Callable extends Func {
+    (...args: any[]): any;
+}
+
+export interface Constructor<T = Callable> extends Func {
+    new (...args: any[]): T;
+}
 
 export type InferGeneric<T> = T extends Type<infer B> ? B : never;
 
@@ -70,3 +93,29 @@ export interface IFileType {
 }
 
 export type FontFormat = "opentype" | "truetype" | "woff" | "woff2" | "datafork";
+
+// --- Module configuration ---
+
+export interface IModuleOptionsFactory<T> {
+    createOptions(): Promise<T> | T;
+}
+
+export interface IModuleOptionsProvider<T extends AsyncOptions> {
+    useExisting?: Type<IModuleOptionsFactory<T>>;
+    useClass?: Type<IModuleOptionsFactory<T>>;
+    useFactory?: (...args: any[]) => Promise<T> | T;
+    inject?: any[];
+}
+
+export type AsyncOptions = Record<string, any>;
+
+export type AsyncOptionsProvider<T extends AsyncOptions> = FactoryProvider<T>;
+
+export type AsyncOptionsTypeProvider<T extends AsyncOptions> =
+    ExistingProvider<IModuleOptionsFactory<T>> | ClassProvider<IModuleOptionsFactory<T>>;
+
+export type AsyncProviders<T extends AsyncOptions> =
+    [AsyncOptionsProvider<T>] | [AsyncOptionsProvider<T>, AsyncOptionsTypeProvider<T>];
+
+export type FromOptionsFactory<T extends AsyncOptions, R = any> = (opts: T)
+    => R;

@@ -41,6 +41,10 @@ export {
     promiseTimeout,
     readDirRecursive,
     getEOL,
+    createAsyncProviders,
+    FromOptionsProviders,
+    createRootModule,
+    createRootModuleAsync,
 } from "./misc";
 
 export {
