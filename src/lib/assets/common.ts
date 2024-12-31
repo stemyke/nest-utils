@@ -65,6 +65,7 @@ export interface IAsset {
     readonly id: string;
     readonly filename: string;
     readonly contentType: string;
+    readonly createdAt: Date;
     readonly metadata: IAssetMeta;
     readonly stream: Readable;
     unlink(): Promise<string>;

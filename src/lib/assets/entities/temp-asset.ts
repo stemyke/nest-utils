@@ -10,6 +10,7 @@ export class TempAsset implements IAsset {
 
     readonly oid: ObjectId;
     readonly id: string;
+    readonly createdAt: Date;
     readonly stream: Readable
 
     protected buffer: Buffer;
@@ -17,6 +18,7 @@ export class TempAsset implements IAsset {
     constructor(src: Readable | Buffer, readonly filename: string, readonly contentType: string, readonly metadata: IAssetMeta) {
         this.oid = new Types.ObjectId();
         this.id = this.oid.toHexString();
+        this.createdAt = new Date();
         this.stream = src instanceof Buffer
             ? bufferToStream(src) : src as Readable;
         this.buffer = src instanceof Buffer ? src : null;

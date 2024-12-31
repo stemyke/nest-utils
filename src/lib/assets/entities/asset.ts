@@ -15,6 +15,10 @@ export class Asset implements IAsset {
         return this.data.contentType;
     }
 
+    get createdAt(): Date {
+        return this.data.createdAt;
+    }
+
     get metadata(): IAssetMeta {
         return this.data.metadata;
     }
