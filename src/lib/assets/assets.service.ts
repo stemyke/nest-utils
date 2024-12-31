@@ -80,7 +80,7 @@ export class AssetsService {
         return !data ? null : new Asset(data._id, data, this.collection, this.driver);
     }
 
-    async findMany(where: Filter<IAsset>): Promise<ReadonlyArray<IAsset>> {
+    async findMany(where: Filter<IAsset>): Promise<IAsset[]> {
         const cursor = this.collection.find(where);
         const items = await cursor.toArray() || [];
         const result: IAsset[] = [];
