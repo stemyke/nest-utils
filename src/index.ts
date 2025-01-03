@@ -2,6 +2,7 @@ export * from './lib/assets';
 export * from './lib/decorators';
 export * from './lib/pipes';
 export * from './lib/utils';
+export * from './lib/templates';
 
 export {
     FactoryToken,
@@ -18,11 +19,12 @@ export {
     IImageParams,
     IFileType,
     FontFormat,
+    ITranslator,
+    IModuleOptionsFactory,
+    IModuleOptionsProvider,
     AsyncOptions,
     AsyncOptionsProvider,
     AsyncOptionsTypeProvider,
     AsyncProviders,
     FromOptionsFactory,
-    IModuleOptionsFactory,
-    IModuleOptionsProvider
 } from './lib/common-types';

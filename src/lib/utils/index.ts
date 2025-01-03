@@ -38,6 +38,7 @@ export {
     isConstructor,
     isType,
     isInterface,
+    getValue,
     promiseTimeout,
     readDirRecursive,
     getEOL,
@@ -58,3 +59,8 @@ export {
 export {
     rangeStream
 } from "./streams";
+
+export {
+    interpolateString,
+    interpolate
+} from "./string";

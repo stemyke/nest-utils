@@ -94,6 +94,13 @@ export interface IFileType {
 
 export type FontFormat = "opentype" | "truetype" | "woff" | "woff2" | "datafork";
 
+// --- Translations ---
+
+export interface ITranslator {
+    getDictionary(lang: string): Promise<void>;
+    getTranslationSync(lang: string, key: string, params: any): string;
+}
+
 // --- Module configuration ---
 
 export interface IModuleOptionsFactory<T> {

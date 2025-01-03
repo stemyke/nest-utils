@@ -103,6 +103,25 @@ export function isInterface(obj: any, interFaceObject: { [key: string]: string }
     return true;
 }
 
+export function getValue(obj: any, key: string, defaultValue?: any, treeFallback: boolean = false): any {
+    key = key || "";
+    const keys = key.split(".");
+    let curKey = "";
+    do {
+        curKey += keys.shift();
+        if (isDefined(obj) && isDefined(obj[curKey]) && (typeof obj[curKey] === "object" || !keys.length)) {
+            obj = obj[curKey];
+            curKey = "";
+        } else if (!keys.length) {
+            defaultValue = typeof defaultValue == "undefined" ? key.replace(new RegExp(`${curKey}$`), `{${curKey}}`) : defaultValue;
+            obj = treeFallback ? obj || defaultValue : defaultValue;
+        } else {
+            curKey += ".";
+        }
+    } while (keys.length);
+    return obj;
+}
+
 export function promiseTimeout(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
