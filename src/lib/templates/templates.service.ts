@@ -1,7 +1,7 @@
 import {lstat, readdir, readFile} from "fs/promises";
 import {join} from "path";
 import {Inject, Injectable} from '@nestjs/common'
-import * as Handlebars from "handlebars";
+import Handlebars from "handlebars";
 
 import { Callable, ITranslator } from '../common-types';
 import { TEMPLATES_DIR, TEMPLATES_TRANSLATOR} from './common';
@@ -37,7 +37,7 @@ export class TemplatesService {
 
     async parseTemplates(dir: string, dirPath: string[]): Promise<void> {
         const files = await readdir(dir);
-        for (let file of files) {
+        for (const file of files) {
             const path = join(dir, file);
             const pathStats = await lstat(path);
             if (pathStats.isDirectory()) {
@@ -57,7 +57,6 @@ export class TemplatesService {
     async render(template: string, language: string, context?: any): Promise<string> {
         await this.init();
         await this.translator.getDictionary(language);
-        console.log(this.templates, template);
         if (!this.templates[template]) {
             return Promise.reject(`Template not found with name: ${template}`);
         }
