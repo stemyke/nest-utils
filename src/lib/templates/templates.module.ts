@@ -11,10 +11,9 @@ import {ITemplatesModuleOpts, TEMPLATES_DIR, TEMPLATES_MODULE_OPTIONS, TEMPLATES
 import {TemplatesService} from './templates.service';
 import {TemplatesTranslator} from "./templates-translator";
 
-export function createTemplatesProviders(): Provider[] {
+function createProviders(): Provider[] {
     return new FromOptionsProviders(TEMPLATES_MODULE_OPTIONS)
         .add(
-            TemplatesTranslator,
             TemplatesService
         )
         .useValue(TEMPLATES_DIR, opts => opts.templatesDir || '../templates')
@@ -33,7 +32,7 @@ export class TemplatesModule {
             TemplatesModule,
             TEMPLATES_MODULE_OPTIONS,
             opts,
-            createTemplatesProviders()
+            createProviders()
         );
     }
 
@@ -42,7 +41,7 @@ export class TemplatesModule {
             TemplatesModule,
             TEMPLATES_MODULE_OPTIONS,
             opts,
-            createTemplatesProviders()
+            createProviders()
         );
     }
 }

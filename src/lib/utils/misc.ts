@@ -2,14 +2,7 @@ import { readdir, stat } from 'fs/promises';
 import { join } from 'path';
 import { EOL } from 'os';
 import { ModuleRef } from '@nestjs/core';
-import {
-    DynamicModule,
-    Inject,
-    Injectable,
-    InjectionToken,
-    Provider,
-    Type,
-} from '@nestjs/common';
+import { DynamicModule, InjectionToken, Provider, Type } from '@nestjs/common';
 import {
     AsyncOptions,
     AsyncOptionsProvider,
@@ -192,33 +185,12 @@ export function createAsyncProviders<T extends AsyncOptions>(
     ];
 }
 
-const FROM_OPTIONS_TOKEN = Symbol.for("FROM_OPTIONS_TOKEN");
-
-@Injectable()
-class FromOptionsResolver<O extends AsyncOptions = AsyncOptions> {
-    constructor(@Inject(FROM_OPTIONS_TOKEN) protected options: O,
-                protected moduleRef: ModuleRef) {
-    }
-
-    resolve<T>(factory: FromOptionsFactory<O, Type<T>>): T {
-        const type = factory(this.options);
-        return this.moduleRef.get(type);
-    }
-}
-
 export class FromOptionsProviders<O extends AsyncOptions> {
 
     protected providers: Provider[];
 
     constructor(protected token: FactoryToken<O>) {
-        this.providers = [
-            {
-                provide: FROM_OPTIONS_TOKEN,
-                useFactory: opts => opts,
-                inject: [token]
-            },
-            FromOptionsResolver
-        ];
+        this.providers = [];
     }
 
     add(...providers: Provider[]) {
@@ -230,20 +202,23 @@ export class FromOptionsProviders<O extends AsyncOptions> {
         return this.add({
             provide,
             useFactory,
-            inject: [this.token]
+            inject: [this.token, ModuleRef]
         });
     }
 
     useType<T>(provide: FactoryToken<T>, factory: FromOptionsFactory<O, Type<T>>) {
         return this.add({
             provide,
-            useFactory: (opts: FromOptionsResolver<O>) => opts.resolve(factory),
-            inject: [FromOptionsResolver]
+            useFactory: async (opts: O, moduleRef: ModuleRef) => {
+                const type = await factory(opts);
+                return await moduleRef.create(type);
+            },
+            inject: [this.token, ModuleRef]
         });
     }
 
     asArray(): Provider[] {
-        return Array.from(this.providers);
+        return [...this.providers];
     }
 }
 

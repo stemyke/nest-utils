@@ -1,6 +1,7 @@
 import { InjectionToken, Type } from '@nestjs/common';
 import { Readable, Writable } from 'stream';
 import type { ObjectId } from 'mongodb';
+import { Connection } from 'mongoose';
 import { FactoryToken, IFileType, IImageMeta, IImageParams } from '../common-types';
 
 export interface IUploadedFile {
@@ -137,6 +138,8 @@ export const fontProps = [
 export const MAX_FILE_SIZE: FactoryToken<number> = Symbol.for('ASSET_MAX_FILE_SIZE');
 
 export const LOCAL_DIR: FactoryToken<string> = Symbol.for('ASSET_LOCAL_DIR');
+
+export const GRID_CONNECTION: FactoryToken<Connection> = Symbol.for('ASSET_GRID_CONNECTION');
 
 export const ASSET_DRIVER: FactoryToken<IAssetDriver> = Symbol.for('ASSET_DRIVER');
 

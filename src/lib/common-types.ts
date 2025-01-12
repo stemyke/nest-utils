@@ -124,5 +124,4 @@ export type AsyncOptionsTypeProvider<T extends AsyncOptions> =
 export type AsyncProviders<T extends AsyncOptions> =
     [AsyncOptionsProvider<T>] | [AsyncOptionsProvider<T>, AsyncOptionsTypeProvider<T>];
 
-export type FromOptionsFactory<T extends AsyncOptions, R = any> = (opts: T)
-    => R;
+export type FromOptionsFactory<T extends AsyncOptions, R = any> = (opts: T) => R | Promise<R>;

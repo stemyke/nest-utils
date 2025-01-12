@@ -18,7 +18,7 @@ import {
     MAX_FILE_SIZE,
 } from './common';
 
-import { AssetGridDriver, AssetLocalDriver } from './drivers';
+import { AssetLocalDriver } from './drivers';
 import { SeekableInterceptor } from './interceptors';
 
 import { AssetsController } from './assets.controller';
@@ -27,23 +27,19 @@ import { AssetResolverService } from './asset-resolver.service';
 import { AssetProcessorService } from './asset-processor.service';
 import { AssetFileTypeService } from './asset-file-type.service';
 
-export function createAssetProviders(extraProviders?: Provider[]): Provider[] {
+function createProviders(extraProviders?: Provider[]): Provider[] {
     return new FromOptionsProviders(ASSET_MODULE_OPTIONS)
         .add(
-            AssetLocalDriver,
-            AssetGridDriver,
-            AssetsService,
-            AssetFileTypeService,
-            AssetProcessorService,
             AssetResolverService,
+            AssetsService,
             SeekableInterceptor,
             ...(extraProviders || [])
         )
         .useValue(MAX_FILE_SIZE, (opts) =>
             isNaN(opts.maxSize) ? 100 * 1024 * 1024 : opts.maxSize
         )
-        .useType(ASSET_DRIVER, (opts) => opts.driver || AssetLocalDriver)
         .useValue(LOCAL_DIR, (opts) => opts.localDir || 'assets_files')
+        .useType(ASSET_DRIVER, (opts) => opts.driver || AssetLocalDriver)
         .useType(
             ASSET_TYPE_DETECTOR,
             (opts) => opts.typeDetector || AssetFileTypeService
@@ -66,7 +62,7 @@ export class AssetsModule {
             AssetsModule,
             ASSET_MODULE_OPTIONS,
             opts,
-            createAssetProviders()
+            createProviders()
         )
     }
 
@@ -76,7 +72,7 @@ export class AssetsModule {
             AssetsModule,
             ASSET_MODULE_OPTIONS,
             opts,
-            createAssetProviders(extraProviders)
+            createProviders(extraProviders)
         )
     }
 }
