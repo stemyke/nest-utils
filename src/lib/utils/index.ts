@@ -53,9 +53,18 @@ export {
     compareId,
     setAndUpdate,
     createTransformer,
+    getModelFromConn,
     hydratePopulated,
     paginate,
-    paginateAggregations
+    paginateAggregations,
+    lookupStages,
+    matchStage,
+    matchField,
+    matchFieldStages,
+    projectStage,
+    addFieldStage,
+    unwindStage,
+    toRegexFilter
 } from "./mongo";
 
 export {
@@ -64,5 +73,7 @@ export {
 
 export {
     interpolateString,
-    interpolate
+    interpolate,
+    escapeRegex,
+    toKeywords
 } from "./string";

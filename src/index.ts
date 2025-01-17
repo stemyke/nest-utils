@@ -5,6 +5,9 @@ export * from './lib/utils';
 export * from './lib/templates';
 
 export {
+    IMatchField,
+    IProjectOptions,
+    IUnwindOptions,
     FactoryToken,
     Callable,
     Constructor,

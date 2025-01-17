@@ -4,7 +4,25 @@ import {
     FactoryProvider,
     Type,
 } from '@nestjs/common';
-import { Types } from 'mongoose';
+import { AnyExpression, Expression, Types } from 'mongoose';
+
+// --- Mongo interfaces and types
+
+export interface IMatchField {
+    field: string;
+    filter: any;
+    when: boolean;
+}
+
+export interface IProjectOptions {
+    [field: string]: AnyExpression | Expression | IProjectOptions;
+}
+
+export interface IUnwindOptions {
+    path: string;
+    includeArrayIndex?: string;
+    preserveNullAndEmptyArrays?: boolean;
+}
 
 // Use this to ensure return types
 export type FactoryToken<R = any> = symbol & { __type?: R };

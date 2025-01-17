@@ -18,3 +18,11 @@ export function interpolate(expr: string | Callable, params?: any): string {
     }
     return expr as string;
 }
+
+export function escapeRegex(str: string): string {
+    return str.replace(/[/\-\\^$*+?.()|[\]{}]/g, '\\$&');
+}
+
+export function toKeywords(str: string): string[] {
+    return `${str}`.split(',').map(s => s.trim()).filter(s => !!s);
+}

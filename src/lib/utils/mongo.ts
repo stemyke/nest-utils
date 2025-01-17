@@ -1,9 +1,26 @@
-import { FilterQuery, HydratedDocument, model, Model, Query, Types, PipelineStage, Document } from 'mongoose';
-import {getValue as getMongoValue, setValue as setMongoValue} from 'mongoose/lib/utils';
+import {
+    Connection,
+    FilterQuery,
+    HydratedDocument,
+    Model,
+    PipelineStage,
+    Query,
+    Types,
+} from 'mongoose';
+import {
+    getValue as getMongoValue,
+    setValue as setMongoValue,
+} from 'mongoose/lib/utils';
 
-import { InferGeneric, IPagination, IPaginationParams } from '../common-types';
-import { isFunction, isString } from './misc';
-import { Type } from '@nestjs/common';
+import {
+    IMatchField,
+    IPagination,
+    IPaginationParams,
+    IProjectOptions,
+    IUnwindOptions,
+} from '../common-types';
+import { isFunction, isObject, isString } from './misc';
+import { escapeRegex, toKeywords } from './string';
 
 export function idToString(value: any): any {
     if (Array.isArray(value)) {
@@ -38,10 +55,19 @@ export function createTransformer<T = any>(transform?: (doc: HydratedDocument<T>
     };
 }
 
-export function hydratePopulated<T extends HydratedDocument<any>>(modelType: Model<T>, json: any): T {
-    const object = modelType.hydrate(json);
+export function getModelFromConn(connection: Connection, name: string): Model<any> {
+    /* If this connection has a parent from `useDb()`, bubble up to parent's models */
+    console.log(connection['_parent'], connection);
+    if (connection.models[name] == null && connection['_parent'] != null) {
+        return getModelFromConn(connection['_parent'], name);
+    }
+    return connection.model(name);
+}
 
-    for (const [path, obj] of Object.entries(modelType.schema.obj)) {
+export function hydratePopulated<T extends HydratedDocument<any>>(model: Model<T>, json: any): T {
+    const object = model.hydrate(json);
+
+    for (const [path, obj] of Object.entries(model.schema.obj)) {
         let ref = (obj as any).ref;
         const type = (obj as any).type;
         if (Array.isArray(type) && type.length > 0) {
@@ -50,8 +76,7 @@ export function hydratePopulated<T extends HydratedDocument<any>>(modelType: Mod
         if (!ref) continue;
         const value = getMongoValue(path, json);
         const hydrateVal = (val: any) => {
-            if (val == null || val instanceof Types.ObjectId) return val;
-            return hydratePopulated(model(ref) as any, val);
+            return !isObject(val) ? val : hydratePopulated(getModelFromConn(model.db, ref) as any, val);
         };
         if (Array.isArray(value)) {
             setMongoValue(path, value.map(hydrateVal), object);
@@ -131,4 +156,86 @@ export async function paginateAggregations<T>(model: Model<T>, aggregations: Pip
     }
     pagination.items = pagination.items.map(i => hydratePopulated(model, i) as any);
     return pagination;
+}
+
+/**
+ * Creates a lookup stage for aggregation pipelines from some simple fields
+ * @param from From which schema should we look up
+ * @param localField local field that contains the id
+ * @param as In which key should we place the looked up entr(y)/(ies)
+ * @param foreignField The foreign field we should use to match the connected entries, _id by default
+ * @param shouldUnwind Lookup results in multiple entries by default, if this is enabled then a single entry will be placed instead of an array
+ */
+export function lookupStages(from: string, localField: string, as: string = null, foreignField: string = "_id", shouldUnwind: boolean = true): [PipelineStage.Lookup, PipelineStage.Unwind] {
+    as = as || localField.replace("Id", "");
+    const stages: [PipelineStage.Lookup, PipelineStage.Unwind] = [
+        {
+            $lookup: {
+                from,
+                localField,
+                foreignField,
+                as
+            }
+        },
+        {
+            $unwind: {
+                path: `$${as}`,
+                preserveNullAndEmptyArrays: true
+            }
+        }
+    ];
+    if (!shouldUnwind) {
+        stages.splice(1, 1);
+    }
+    return stages;
+}
+
+export function matchStage(match: FilterQuery<any>): PipelineStage.Match {
+    return {$match: match};
+}
+
+export function matchField(field: string, filter: any, when: boolean): IMatchField {
+    return {field, filter, when};
+}
+
+export function matchFieldStages(...fields: IMatchField[]): ReadonlyArray<PipelineStage.Match> {
+    const match = {};
+    fields.forEach(field => {
+        if (field.when) {
+            match[field.field] = field.filter;
+        }
+    });
+    return Object.keys(match).length > 0 ? [matchStage(match)] : [];
+}
+
+export function projectStage(fields: IProjectOptions): PipelineStage.Project {
+    return {$project: fields};
+}
+
+export function addFieldStage(fields: IProjectOptions): PipelineStage.AddFields {
+    return {$addFields: fields};
+}
+
+export function unwindStage(fieldOrOpts: string | IUnwindOptions): PipelineStage.Unwind {
+    return {$unwind: fieldOrOpts};
+}
+
+export function toRegexFilter(fields: Record<string, string>, filter: string): FilterQuery<any> {
+    filter = toKeywords(filter).map(word => `(${escapeRegex(word)})`).join('|');
+    const query = Object.entries(fields).reduce((res, [key, value]) => {
+        res[key] = {
+            $regex: toKeywords(value).map(word => `(${escapeRegex(word)})`).join('|'),
+            $options: 'i'
+        };
+        return res;
+    }, {} as FilterQuery<any>);
+    query.$or = Object.keys(fields).map(field => {
+        return {
+            [field]: {
+                $regex: filter,
+                $options: 'i'
+            }
+        }
+    });
+    return query;
 }
