@@ -53,7 +53,9 @@ export {
     compareId,
     setAndUpdate,
     createTransformer,
-    paginate
+    hydratePopulated,
+    paginate,
+    paginateAggregations
 } from "./mongo";
 
 export {
