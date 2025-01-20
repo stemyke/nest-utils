@@ -24,5 +24,5 @@ export function escapeRegex(str: string): string {
 }
 
 export function toKeywords(str: string): string[] {
-    return `${str}`.split(',').map(s => s.trim()).filter(s => !!s);
+    return !str ? [] : `${str}`.split(',').map(s => s.trim()).filter(s => !!s);
 }
