@@ -1,7 +1,7 @@
 import { readdir, stat } from 'fs/promises';
 import { join } from 'path';
 import { EOL } from 'os';
-import { ModuleRef } from '@nestjs/core';
+import { ContextId, ContextIdFactory, ModuleRef, REQUEST } from '@nestjs/core';
 import { DynamicModule, InjectionToken, Provider, Type } from '@nestjs/common';
 import {
     AsyncOptions,
@@ -14,6 +14,7 @@ import {
     IModuleOptionsFactory,
     IModuleOptionsProvider,
 } from '../common-types';
+import { InstanceLinksHost } from '@nestjs/core/injector/instance-links-host';
 
 export function isNullOrUndefined(value: any): boolean {
     return value == null || typeof value == 'undefined';
@@ -211,7 +212,16 @@ export class FromOptionsProviders<O extends AsyncOptions> {
             provide,
             useFactory: async (opts: O, moduleRef: ModuleRef) => {
                 const type = await factory(opts);
-                return await moduleRef.create(type);
+                try {
+                    // Try to use internal API-s
+                    const link = moduleRef['instanceLinksHost'].get(type);
+                    await link.wrapperRef.settlementSignal['settledPromise'];
+                } catch (e) {
+                    // Magic timeout
+                    console.log('Using magic timeout', e);
+                    await promiseTimeout(50);
+                }
+                return moduleRef.resolve(type, null, {strict: false});
             },
             inject: [this.token, ModuleRef]
         });

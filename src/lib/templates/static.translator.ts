@@ -5,7 +5,7 @@ import { getValue, interpolate, isString } from '../utils';
 
 
 @Injectable()
-export class TemplatesTranslator implements ITranslator {
+export class StaticTranslator implements ITranslator {
 
     protected dictionaries: { [lang: string]: Record<string, string> };
 
@@ -17,7 +17,9 @@ export class TemplatesTranslator implements ITranslator {
         this.dictionaries[lang] = dictionary;
     }
 
-    async getDictionary(lang: string) {}
+    getDictionary(lang: string) {
+        return Promise.resolve();
+    }
 
     getTranslationSync(lang: string, key: string, params: any): string {
         if (!isString(key) || !key.length) {

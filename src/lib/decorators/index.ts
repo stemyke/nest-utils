@@ -1,4 +1,4 @@
-export {AuthUser} from './auth-user.decorator';
+export {ApiProperty, ApiPropertyOpts} from './api-property.decorator';
 export {Public} from './public.decorator';
 export {ComplexQuery, SimpleQuery} from './query.decorator';
 export {ResolveEntity} from './resolve-entity.decorator';

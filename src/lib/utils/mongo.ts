@@ -223,12 +223,15 @@ export function unwindStage(fieldOrOpts: string | IUnwindOptions): PipelineStage
 export function toRegexFilter(fields: Record<string, string>, filter: string): FilterQuery<any> {
     filter = toKeywords(filter).map(word => `(${escapeRegex(word)})`).join('|');
     const query = Object.entries(fields).reduce((res, [key, value]) => {
+        const $regex = toKeywords(value).map(word => `(${escapeRegex(word)})`).join('|');
+        if (!$regex) return res;
         res[key] = {
-            $regex: toKeywords(value).map(word => `(${escapeRegex(word)})`).join('|'),
+            $regex,
             $options: 'i'
         };
         return res;
     }, {} as FilterQuery<any>);
+    if (!filter) return query;
     query.$or = Object.keys(fields).map(field => {
         return {
             [field]: {

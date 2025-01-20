@@ -9,15 +9,16 @@ import {
 
 import {ITemplatesModuleOpts, TEMPLATES_DIR, TEMPLATES_MODULE_OPTIONS, TEMPLATES_TRANSLATOR} from './common';
 import {TemplatesService} from './templates.service';
-import {TemplatesTranslator} from "./templates-translator";
+import {StaticTranslator} from "./static.translator";
 
 function createProviders(): Provider[] {
     return new FromOptionsProviders(TEMPLATES_MODULE_OPTIONS)
         .add(
+            StaticTranslator,
             TemplatesService
         )
         .useValue(TEMPLATES_DIR, opts => opts.templatesDir || '../templates')
-        .useType(TEMPLATES_TRANSLATOR, opts => opts.translator || TemplatesTranslator)
+        .useType(TEMPLATES_TRANSLATOR, opts => opts.translator || StaticTranslator)
         .asArray();
 }
 

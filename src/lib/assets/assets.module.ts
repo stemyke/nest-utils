@@ -18,20 +18,24 @@ import {
     MAX_FILE_SIZE,
 } from './common';
 
-import { AssetLocalDriver } from './drivers';
+import { AssetGridDriver, AssetLocalDriver } from './drivers';
 import { SeekableInterceptor } from './interceptors';
-
-import { AssetsController } from './assets.controller';
-import { AssetsService } from './assets.service';
 import { AssetResolverService } from './asset-resolver.service';
 import { AssetProcessorService } from './asset-processor.service';
 import { AssetFileTypeService } from './asset-file-type.service';
+
+import { AssetsController } from './assets.controller';
+import { AssetsService } from './assets.service';
 
 function createProviders(extraProviders?: Provider[]): Provider[] {
     return new FromOptionsProviders(ASSET_MODULE_OPTIONS)
         .add(
             AssetResolverService,
             AssetsService,
+            AssetGridDriver,
+            AssetLocalDriver,
+            AssetFileTypeService,
+            AssetProcessorService,
             SeekableInterceptor,
             ...(extraProviders || [])
         )
