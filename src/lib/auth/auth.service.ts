@@ -50,10 +50,22 @@ export class AuthService {
             id: impersonated.context.id,
             impersonator: ctx.context.id
         };
-        impersonated.impersonator = ctx;
+        impersonated.impersonator = ctx.impersonator || ctx;
         return {
             token: this.jwt.sign(payload),
             user: this.response(impersonated)
+        };
+    }
+
+    async endImpersonate(ctx: IAuthContext): Promise<IJwtResponse> {
+        const target = ctx.impersonator || ctx;
+        const payload: IJwtPayload = {
+            id: target.context.id
+        };
+        delete target['impersonator'];
+        return {
+            token: this.jwt.sign(payload),
+            user: this.response(target)
         };
     }
 
