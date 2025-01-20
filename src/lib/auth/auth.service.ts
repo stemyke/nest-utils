@@ -46,11 +46,12 @@ export class AuthService {
 
     async impersonate(ctx: IAuthContext, target: string): Promise<IJwtResponse> {
         const impersonated = await this.byId(target);
+        const impersonator = ctx.impersonator || ctx;
+        impersonated.impersonator = impersonator;
         const payload: IJwtPayload = {
             id: impersonated.context.id,
-            impersonator: ctx.context.id
+            impersonator: impersonator.context.id
         };
-        impersonated.impersonator = ctx.impersonator || ctx;
         return {
             token: this.jwt.sign(payload),
             user: this.response(impersonated)
