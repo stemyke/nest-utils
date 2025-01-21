@@ -12,7 +12,6 @@ import { isFunction } from '../utils';
 @Injectable()
 export class AuthService {
     constructor(protected jwt: JwtService, @Inject(USER_HANDLER) protected users: IUserHandler) {
-        console.log('Auth serbice', this);
     }
 
     async validate(

@@ -57,7 +57,6 @@ export function createTransformer<T = any>(transform?: (doc: HydratedDocument<T>
 
 export function getModelFromConn(connection: Connection, name: string): Model<any> {
     /* If this connection has a parent from `useDb()`, bubble up to parent's models */
-    console.log(connection['_parent'], connection);
     if (connection.models[name] == null && connection['_parent'] != null) {
         return getModelFromConn(connection['_parent'], name);
     }
