@@ -1,7 +1,29 @@
+import { applyDecorators } from '@nestjs/common';
+import {
+    Validate,
+    ValidatorConstraint,
+    ValidatorConstraintInterface,
+} from 'class-validator';
 import { Transform } from 'class-transformer';
-import { Types } from 'mongoose';
+import { isObjectIdOrHexString, Types } from 'mongoose';
 import { transformValues } from '../utils';
 
+// Custom constraint class
+@ValidatorConstraint({ async: false })
+class ObjectIdConstraint implements ValidatorConstraintInterface {
+
+    validate(value: any) {
+        return !value || isObjectIdOrHexString(value);
+    }
+
+    defaultMessage() {
+        return `Specified value is not an ObjectId like string`;
+    }
+}
+
 export function ToObjectId() {
-    return Transform((p) => transformValues(p.value, v => new Types.ObjectId(v)));
+    return applyDecorators(
+        Validate(ObjectIdConstraint),
+        Transform((p) => transformValues(p.value, v => new Types.ObjectId(v))),
+    );
 }
