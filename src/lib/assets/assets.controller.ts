@@ -33,7 +33,7 @@ import { AssetsService } from './assets.service';
 import { AssetResolverService } from './asset-resolver.service';
 import { SeekableInterceptor } from './interceptors';
 
-type AssetReqType = 'Image' | 'Asset';
+type AssetReqType = 'Image' | 'Preview' | 'Asset';
 
 @Controller('assets')
 @UseInterceptors(SeekableInterceptor)
@@ -81,15 +81,17 @@ export class AssetsController {
 
     @Public()
     @Get('/:id')
-    async getFile(@Param('id') id: string, @Query('lazy') lazy: boolean) {
-        const asset = await this.getAsset('Asset', id, lazy);
+    async getFile(@Param('id') id: string, @Query('lazy') lazy: boolean, @Query('type') type: string) {
+        const assetType: AssetReqType = type === 'preview' ? 'Preview' : 'Asset';
+        const asset = await this.getAsset(assetType, id, lazy);
         return this.streamResponse(asset.download(), asset);
     }
 
     @Public()
     @Get('/by-name/:name')
-    async getFileByName(@Param('name') name: string) {
-        const asset = await this.getAssetByName('Asset', name);
+    async getFileByName(@Param('name') name: string, @Query('type') type: string) {
+        const assetType: AssetReqType = type === 'preview' ? 'Preview' : 'Asset';
+        const asset = await this.getAssetByName(assetType, name);
         return this.streamResponse(asset.download(), asset);
     }
 
@@ -175,7 +177,7 @@ export class AssetsController {
                 `${type} is classified, and can be only downloaded from a custom url.`
             );
         }
-        if (type == 'Image' && asset.metadata.preview) {
+        if ((type == 'Image' || type == 'Preview') && asset.metadata.preview) {
             return this.resolveFinalAsset(
                 type,
                 await this.assetResolver.resolve(asset.metadata.preview)
