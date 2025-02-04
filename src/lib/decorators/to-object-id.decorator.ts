@@ -6,14 +6,14 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { isObjectIdOrHexString, Types } from 'mongoose';
-import { transformValues } from '../utils';
+import { transformValues, validateValues } from '../utils';
 
 // Custom constraint class
 @ValidatorConstraint({ async: false })
 class ObjectIdConstraint implements ValidatorConstraintInterface {
 
     validate(value: any) {
-        return !value || isObjectIdOrHexString(value);
+        return validateValues(value, v => !v || isObjectIdOrHexString(v));
     }
 
     defaultMessage() {

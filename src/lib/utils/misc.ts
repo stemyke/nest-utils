@@ -1,7 +1,7 @@
 import { readdir, stat } from 'fs/promises';
 import { join } from 'path';
 import { EOL } from 'os';
-import { ContextId, ContextIdFactory, ModuleRef, REQUEST } from '@nestjs/core';
+import { ModuleRef } from '@nestjs/core';
 import { DynamicModule, InjectionToken, Provider, Type } from '@nestjs/common';
 import {
     AsyncOptions,
@@ -14,7 +14,6 @@ import {
     IModuleOptionsFactory,
     IModuleOptionsProvider,
 } from '../common-types';
-import { InstanceLinksHost } from '@nestjs/core/injector/instance-links-host';
 
 export function isNullOrUndefined(value: any): boolean {
     return value == null || typeof value == 'undefined';
@@ -22,6 +21,16 @@ export function isNullOrUndefined(value: any): boolean {
 
 export function isDefined(value: any): boolean {
     return !isNullOrUndefined(value);
+}
+
+export function validateValues(
+    value: any,
+    validator: (value: any) => boolean
+): any {
+    if (Array.isArray(value)) {
+        return value.every((v) => validateValues(v, validator));
+    }
+    return validator(value);
 }
 
 export function transformValues(
