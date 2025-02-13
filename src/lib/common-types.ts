@@ -59,7 +59,7 @@ export interface IPaginationParams<T> {
     page: number;
     limit: number;
     sort?: string;
-    populate?: Array<KeysOfType<T, Types.ObjectId>>;
+    populate?: Array<KeysOfType<T, Types.ObjectId | Types.ObjectId[]>>;
     [key: string]: any;
 }
 

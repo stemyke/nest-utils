@@ -4,6 +4,7 @@ export * from './lib/decorators';
 export * from './lib/pipes';
 export * from './lib/utils';
 export * from './lib/templates';
+export * from './lib/translation';
 
 export {
     IMatchField,

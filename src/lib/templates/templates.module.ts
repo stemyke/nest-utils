@@ -17,7 +17,12 @@ function createProviders(): Provider[] {
             StaticTranslator,
             TemplatesService
         )
-        .useValue(TEMPLATES_DIR, opts => opts.templatesDir || '../templates')
+        .useValue(TEMPLATES_DIR, opts => {
+            if (!opts.templatesDir) {
+                throw new Error(`templatesDir should be a non empty string`);
+            }
+            return opts.templatesDir;
+        })
         .useType(TEMPLATES_TRANSLATOR, opts => opts.translator || StaticTranslator)
         .asArray();
 }
@@ -28,7 +33,7 @@ function createProviders(): Provider[] {
 })
 export class TemplatesModule {
 
-    static forRoot(opts?: ITemplatesModuleOpts): DynamicModule {
+    static forRoot(opts: ITemplatesModuleOpts): DynamicModule {
         return createRootModule(
             TemplatesModule,
             TEMPLATES_MODULE_OPTIONS,

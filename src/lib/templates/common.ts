@@ -2,7 +2,7 @@ import { Type } from '@nestjs/common';
 import { FactoryToken, ITranslator } from '../common-types';
 
 export interface ITemplatesModuleOpts {
-    templatesDir?: string;
+    templatesDir: string;
     translator?: Type<ITranslator>;
 }
 
