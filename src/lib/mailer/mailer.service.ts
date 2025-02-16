@@ -5,7 +5,7 @@ import SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { Readable } from 'stream';
 import juice from 'juice';
 
-import { copyStream, isString } from '../utils';
+import { copyStream, isObject, isString } from '../utils';
 import { TemplatesService } from '../templates';
 
 import {
@@ -13,6 +13,7 @@ import {
     DEFAULT_MAIL_OPTIONS,
     DefaultMailOptions,
     PREVIEW_MAILS,
+    SendMailOptions,
     SendTemplateOptions,
     SMTP_OPTIONS,
     SmtpOptions,
@@ -53,13 +54,15 @@ export class MailerService {
             });
             this.transporter.use('stream', (mail, callback) => {
                 const data = { ...mail.data };
-                data.attachments = (data.attachments || []).map(attachment => {
-                    attachment = { ...attachment };
-                    if (attachment.content instanceof Readable) {
-                        attachment.content = copyStream(attachment.content);
+                data.attachments = (data.attachments || []).map(
+                    (attachment) => {
+                        attachment = { ...attachment };
+                        if (attachment.content instanceof Readable) {
+                            attachment.content = copyStream(attachment.content);
+                        }
+                        return attachment;
                     }
-                    return attachment;
-                });
+                );
                 return previewEmail(data)
                     .then(() => callback())
                     .catch(callback);
@@ -73,11 +76,9 @@ export class MailerService {
             {},
             isString(content) ? {} : content.context || {}
         );
-        return new MailTarget(
-            this.transporter,
-            { ...this.options, ...rest },
-            context,
-            () => this.renderContent(content, context)
+        const sendOpts = { ...this.options, ...rest } as SendMailOptions;
+        return new MailTarget(this.transporter, sendOpts, context, () =>
+            this.renderContent(content, context, sendOpts)
         );
     }
 
@@ -87,17 +88,22 @@ export class MailerService {
 
     protected async renderContent(
         content: string | SendTemplateOptions,
-        context: Record<string, any>
+        context: Record<string, any>,
+        opts: SendMailOptions
     ) {
-        const html = juice(
-            isString(content)
-                ? content
-                : await this.templates.render(
-                      content.template,
-                      content.language,
-                      context
-                  )
-        );
+        let html = content as string;
+        if (isObject(content)) {
+            const language = content.language || 'en';
+            html = await this.templates.render(
+                content.template,
+                language,
+                context
+            );
+            opts.subject = !opts.subject
+                ? ''
+                : this.templates.translate(language, opts.subject, context);
+        }
+        html = juice(html);
         const pattern = /<body[^>]*>([\s\S]*?)<\/body>/i;
         const match = html.match(pattern);
         return match ? match[1].trim() : html;

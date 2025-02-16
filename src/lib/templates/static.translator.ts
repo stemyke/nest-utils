@@ -21,7 +21,7 @@ export class StaticTranslator implements ITranslator {
         return Promise.resolve();
     }
 
-    getTranslationSync(lang: string, key: string, params: any): string {
+    getTranslationSync(lang: string, key: string, params?: Record<string, any>): string {
         if (!isString(key) || !key.length) {
             throw new Error(`Parameter "key" required`);
         }

@@ -48,7 +48,7 @@ export function getType(obj: any): string {
     return Object.prototype.toString.call(obj).match(regex)[1].toLowerCase();
 }
 
-export function isObject(value: any): boolean {
+export function isObject<T extends Record<any, any>>(value: T | unknown): value is T {
     return getType(value) == 'object';
 }
 

@@ -118,7 +118,7 @@ export type FontFormat = "opentype" | "truetype" | "woff" | "woff2" | "datafork"
 
 export interface ITranslator {
     getDictionary(lang: string): Promise<void>;
-    getTranslationSync(lang: string, key: string, params: any): string;
+    getTranslationSync(lang: string, key: string, params?: Record<string, any>): string;
 }
 
 // --- Module configuration ---

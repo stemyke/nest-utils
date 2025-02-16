@@ -68,7 +68,14 @@ export class TemplatesService {
             return Promise.reject(`Template not found with name: ${template}`);
         }
         context = Object.assign({language}, context || {});
-        const res = this.templates[template](context);
+        const res = this.templates[template]({
+            ...context,
+            context
+        });
         return res instanceof Error ? await Promise.reject(res) : res;
+    }
+
+    translate(language: string, key: string, params?: Record<string, any>): string {
+        return this.translator.getTranslationSync(language, key, params);
     }
 }
