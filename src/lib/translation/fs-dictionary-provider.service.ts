@@ -34,7 +34,14 @@ export class FsDictionaryProvider implements IDictionaryProvider {
             const stats = await stat(path);
             if (stats.isFile()) {
                 const content = await readFile(path, 'utf8');
-                return JSON.parse(content);
+                const json = JSON.parse(content);
+                Object.keys(json).forEach(key => {
+                    const value = json[key];
+                    if (Array.isArray(value)) {
+                        json[key] = value.join('\n');
+                    }
+                });
+                return json;
             }
         } catch (e) {
             console.error(e);

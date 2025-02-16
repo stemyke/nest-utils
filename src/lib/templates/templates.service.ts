@@ -28,7 +28,8 @@ export class TemplatesService {
             return !obj ? [] : Object.keys(obj);
         });
         Handlebars.registerHelper(`translate`, function (key: string, params: any) {
-            return translator.getTranslationSync(this.language, key, params);
+            const value = translator.getTranslationSync(this.language, key, params);
+            return value.replace(/\n/g, '<br>');
         });
     }
 
