@@ -4,6 +4,7 @@ export * from './lib/decorators';
 export * from './lib/pipes';
 export * from './lib/utils';
 export * from './lib/templates';
+export * from './lib/mailer';
 export * from './lib/translation';
 
 export {
@@ -16,6 +17,7 @@ export {
     InferGeneric,
     KeysOfType,
     OnlyOfType,
+    PartialBy,
     IPaginationParams,
     IPaginationMeta,
     IPagination,

@@ -38,7 +38,7 @@ function createProviders(): Provider[] {
 })
 export class TranslationModule {
 
-    static forRoot(opts?: ITranslationModuleOpts): DynamicModule {
+    static forRoot(opts: ITranslationModuleOpts): DynamicModule {
         return createRootModule(
             TranslationModule,
             TRANSLATION_MODULE_OPTIONS,

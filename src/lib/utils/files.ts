@@ -1,9 +1,9 @@
-import { Readable, ReadableOptions } from 'stream';
+import { Readable } from 'stream';
 import { tmpdir } from 'os';
 import { Buffer } from 'buffer';
 import { createReadStream, realpathSync } from 'fs';
-import { writeFile, mkdir } from 'fs/promises';
-import { join, dirname, basename } from 'path';
+import { mkdir, writeFile } from 'fs/promises';
+import { basename, dirname, join } from 'path';
 import { randomUUID } from 'crypto';
 import ffmpeg from 'fluent-ffmpeg';
 import Mimetics from 'mimetics';
@@ -21,30 +21,6 @@ import sharp_ from 'sharp';
 const sharp = sharp_;
 
 export const tempDirectory = realpathSync(tmpdir());
-
-class ReadableStreamClone extends Readable {
-
-    constructor(readableStream: Readable, opts?: ReadableOptions) {
-        super(opts);
-        readableStream?.on("data", chunk => {
-            this.push(chunk);
-        });
-        readableStream?.on("end", () => {
-            this.push(null);
-        });
-        readableStream?.on("close", () => {
-            this.push(null);
-        });
-        readableStream?.on("error", err => {
-            this.emit("error", err);
-        });
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    _read() {
-
-    }
-}
 
 const fileSizeNames = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
 
@@ -86,10 +62,6 @@ export async function generateVideoThumbnail(buffer: Buffer) {
                 filename: basename(output)
             });
     });
-}
-
-export function copyStream(stream: Readable, opts?: ReadableOptions): Readable {
-    return new ReadableStreamClone(stream, opts);
 }
 
 export async function fetchBuffer(url: string): Promise<Buffer> {

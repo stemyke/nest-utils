@@ -6,7 +6,7 @@ export interface IDictionaryProvider {
 }
 
 export interface ITranslationModuleOpts {
-    translationsPath?: string;
+    translationsPath: string;
     provider?: Type<IDictionaryProvider>;
 }
 

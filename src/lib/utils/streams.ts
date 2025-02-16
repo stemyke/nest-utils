@@ -1,4 +1,4 @@
-import { Transform } from 'stream';
+import { Readable, ReadableOptions, Transform } from 'stream';
 
 export function rangeStream(start: number, end: number): Transform {
     end = typeof end === 'number' ? end + 1 : Infinity;
@@ -34,4 +34,31 @@ export function rangeStream(start: number, end: number): Transform {
             next();
         },
     });
+}
+
+class ReadableStreamClone extends Readable {
+
+    constructor(readonly source: Readable, opts?: ReadableOptions) {
+        super(opts);
+        source?.on("data", chunk => {
+            this.push(chunk);
+        });
+        source?.on("end", () => {
+            this.push(null);
+        });
+        source?.on("error", err => {
+            this.emit("error", err);
+        });
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    _read(size: number) {
+
+    }
+}
+
+export function copyStream(stream: Readable, opts?: ReadableOptions): Readable {
+    return stream instanceof ReadableStreamClone
+        ? new ReadableStreamClone(stream.source, opts)
+        : new ReadableStreamClone(stream, opts);
 }

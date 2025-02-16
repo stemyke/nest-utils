@@ -4,7 +4,6 @@ export {
     tempPath,
     tempWrite,
     generateVideoThumbnail,
-    copyStream,
     fetchBuffer,
     bufferToStream,
     streamToBuffer,
@@ -13,7 +12,7 @@ export {
     fileTypeFromBuffer,
     fileTypeFromStream,
     toImage
-} from "./files";
+} from './files';
 
 export {
     IParsedRange,
@@ -47,7 +46,7 @@ export {
     FromOptionsProviders,
     createRootModule,
     createRootModuleAsync,
-} from "./misc";
+} from './misc';
 
 export {
     idToString,
@@ -66,15 +65,17 @@ export {
     addFieldStage,
     unwindStage,
     toRegexFilter
-} from "./mongo";
+} from './mongo';
 
 export {
-    rangeStream
-} from "./streams";
+    rangeStream,
+    copyStream
+} from './streams';
 
 export {
     interpolateString,
     interpolate,
     escapeRegex,
-    toKeywords
-} from "./string";
+    toKeywords,
+    stripTags
+} from './string';

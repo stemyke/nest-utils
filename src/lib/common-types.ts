@@ -53,6 +53,8 @@ export type OnlyOfType<T, W> = {
     [K in KeysOfType<T, K>]: T[K];
 };
 
+export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>
+
 // --- Pagination ---
 
 export interface IPaginationParams<T> {

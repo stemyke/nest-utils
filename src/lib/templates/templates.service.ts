@@ -1,7 +1,9 @@
-import {lstat, readdir, readFile} from "fs/promises";
-import {join} from "path";
+import {lstat, readdir, readFile} from 'fs/promises';
+import { Readable, PassThrough } from 'stream';
+import { createReadStream } from 'fs';
+import {join} from 'path';
 import {Inject, Injectable} from '@nestjs/common'
-import Handlebars from "handlebars";
+import Handlebars from 'handlebars';
 
 import { Callable, ITranslator } from '../common-types';
 import { TEMPLATES_DIR, TEMPLATES_TRANSLATOR} from './common';
@@ -35,6 +37,10 @@ export class TemplatesService {
         return this.initPromise;
     }
 
+    asset(path: string): Readable {
+        return createReadStream(join(this.templatesDir, 'assets', path), {});
+    }
+
     async parseTemplates(dir: string, dirPath: string[]): Promise<void> {
         const files = await readdir(dir);
         for (const file of files) {
@@ -44,17 +50,17 @@ export class TemplatesService {
                 await this.parseTemplates(join(dir, file), dirPath.concat([file]));
                 continue;
             }
-            const parts = file.split(".");
+            const parts = file.split('.');
             parts.pop();
-            const name = parts.join(".");
-            const fullName = dirPath.concat([name]).join("-");
+            const name = parts.join('.');
+            const fullName = dirPath.concat([name]).join('-');
             const content = await readFile(path, 'utf8');
             this.templates[fullName] = Handlebars.compile(content);
             Handlebars.registerPartial(fullName, content);
         }
     }
 
-    async render(template: string, language: string, context?: any): Promise<string> {
+    async render(template: string, language: string, context?: Record<string, any>): Promise<string> {
         await this.init();
         await this.translator.getDictionary(language);
         if (!this.templates[template]) {

@@ -26,3 +26,7 @@ export function escapeRegex(str: string): string {
 export function toKeywords(str: string): string[] {
     return !str ? [] : `${str}`.split(',').map(s => s.trim()).filter(s => !!s);
 }
+
+export function stripTags(str: string): string {
+    return str.replace(/(<([^>]+)>)/gi, '');
+}
