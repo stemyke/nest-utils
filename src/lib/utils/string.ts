@@ -28,5 +28,5 @@ export function toKeywords(str: string): string[] {
 }
 
 export function stripTags(str: string): string {
-    return str.replace(/<br>/g, '\\n').replace(/(<([^>]+)>)/gi, '');
+    return str.replace(/<br>/g, '\n').replace(/(<([^>]+)>)/gi, '');
 }
