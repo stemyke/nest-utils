@@ -12,6 +12,8 @@ export {
     IProjectOptions,
     IUnwindOptions,
     FactoryToken,
+    InstanceToken,
+    Func,
     Callable,
     Constructor,
     InferGeneric,
@@ -33,5 +35,6 @@ export {
     AsyncOptionsProvider,
     AsyncOptionsTypeProvider,
     AsyncProviders,
+    FromOptionsInstanceResolve,
     FromOptionsFactory,
 } from './lib/common-types';

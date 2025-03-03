@@ -1,9 +1,9 @@
 import { Readable } from 'stream';
 import type { Collection, ObjectId } from 'mongodb';
 
-import { IAsset, IAssetDriver, IAssetMeta } from '../common';
 import { IImageParams } from '../../common-types';
 import { isString, streamToBuffer, toImage } from '../../utils';
+import { IAsset, IAssetDriver, IAssetMeta } from '../common';
 
 export class Asset implements IAsset {
 
@@ -23,6 +23,10 @@ export class Asset implements IAsset {
         return this.data.metadata;
     }
 
+    get bucket(): string {
+        return this.data.bucket;
+    }
+
     get stream(): Readable {
         return this.driver.openDownloadStream(this.oid);
     }
@@ -33,33 +37,39 @@ export class Asset implements IAsset {
 
     protected deleted: boolean;
 
-    constructor(readonly oid: ObjectId,
-                protected data: Partial<IAsset>,
-                protected collection: Collection,
-                protected driver: IAssetDriver) {
+    constructor(
+        readonly oid: ObjectId,
+        readonly driver: IAssetDriver,
+        protected data: Partial<IAsset>,
+        protected collection: Collection,
+    ) {
         this.deleted = false;
     }
 
     async load(): Promise<this> {
-        const res = await this.collection.findOne({_id: this.oid}) as any;
+        const res = (await this.collection.findOne({ _id: this.oid })) as any;
         this.deleted = !res;
         this.data = res || {};
         return this;
     }
 
     async save() {
-        return this.collection.updateOne({_id: this.oid}, {$set: this.toJSON()}, {upsert: true});
+        return this.collection.updateOne(
+            { _id: this.oid },
+            { $set: this.toJSON() },
+            { upsert: true }
+        );
     }
 
     async unlink() {
         try {
             await this.driver.delete(this.oid);
-            await this.collection.deleteOne({_id: this.oid});
+            await this.collection.deleteOne({ _id: this.oid });
         } catch (error) {
             let err = error as any;
             if (error) {
-                err = error.message || error || "";
-                if (!isString(err) || !err.startsWith("FileNotFound")) {
+                err = error.message || error || '';
+                if (!isString(err) || !err.startsWith('FileNotFound')) {
                     throw err;
                 }
             }
@@ -69,7 +79,10 @@ export class Asset implements IAsset {
 
     async setMeta(metadata: Partial<IAssetMeta>) {
         metadata = Object.assign(this.metadata, metadata || {});
-        await this.collection.updateOne({_id: this.oid}, {$set: {metadata}});
+        await this.collection.updateOne(
+            { _id: this.oid },
+            { $set: { metadata } }
+        );
     }
 
     getBuffer(): Promise<Buffer> {
@@ -78,12 +91,16 @@ export class Asset implements IAsset {
 
     async download(metadata?: IAssetMeta) {
         metadata = Object.assign(this.metadata, metadata || {});
-        metadata.downloadCount = isNaN(metadata.downloadCount) || !metadata.firstDownload
-            ? 1
-            : metadata.downloadCount + 1;
+        metadata.downloadCount =
+            isNaN(metadata.downloadCount) || !metadata.firstDownload
+                ? 1
+                : metadata.downloadCount + 1;
         metadata.firstDownload = metadata.firstDownload || new Date();
         metadata.lastDownload = new Date();
-        await this.collection.updateOne({_id: this.oid}, {$set: {metadata}});
+        await this.collection.updateOne(
+            { _id: this.oid },
+            { $set: { metadata } }
+        );
         return this.stream;
     }
 

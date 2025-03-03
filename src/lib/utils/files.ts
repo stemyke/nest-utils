@@ -33,8 +33,8 @@ export function formatSize(size: number): string {
     return `${size.toFixed(2)} ${fileSizeNames[index]}`;
 }
 
-export async function tempPath(filePath: string) {
-    const path = join(tempDirectory, randomUUID(), filePath);
+export async function tempPath(filePath: string, dir?: string) {
+    const path = join(tempDirectory, dir || randomUUID(), filePath);
     await mkdir(dirname(path), { recursive: true });
     return path;
 }

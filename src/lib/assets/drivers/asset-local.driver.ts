@@ -2,21 +2,14 @@ import { createReadStream, createWriteStream, mkdirSync } from 'fs';
 import { rm, writeFile } from 'fs/promises';
 import type { ObjectId } from 'mongodb';
 import { Types } from 'mongoose';
-import { Inject, Injectable } from '@nestjs/common';
 
-import {
-    IAssetDriver,
-    IAssetUploadOpts,
-    IAssetUploadStream,
-    LOCAL_DIR,
-} from '../common';
+import { IAssetDriver, IAssetUploadOpts, IAssetUploadStream } from '../common';
 
-@Injectable()
 export class AssetLocalDriver implements IAssetDriver {
-    constructor(@Inject(LOCAL_DIR) protected dir: string) {}
+    constructor(protected dir: string) {}
 
     openUploadStream(filename: string, opts?: IAssetUploadOpts) {
-        const id = new Types.ObjectId();
+        const id = opts?.id || new Types.ObjectId();
         const dir = `${this.dir}/${id.toHexString()}`;
         mkdirSync(dir, { recursive: true });
         const stream = createWriteStream(

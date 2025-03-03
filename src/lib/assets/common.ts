@@ -1,8 +1,12 @@
-import { InjectionToken, Type } from '@nestjs/common';
+import { Type } from '@nestjs/common';
 import { Readable, Writable } from 'stream';
 import type { ObjectId } from 'mongodb';
-import { Connection } from 'mongoose';
-import { FactoryToken, IFileType, IImageMeta, IImageParams } from '../common-types';
+import {
+    FactoryToken,
+    IFileType,
+    IImageMeta,
+    IImageParams,
+} from '../common-types';
 
 export interface IUploadedFile {
     /** Name of the form field associated with this file. */
@@ -62,12 +66,14 @@ export interface IAssetMeta extends IImageMeta {
 }
 
 export interface IAsset {
+    readonly driver: IAssetDriver;
     readonly oid: ObjectId;
     readonly id: string;
     readonly filename: string;
     readonly contentType: string;
     readonly createdAt: Date;
     readonly metadata: IAssetMeta;
+    readonly bucket: string;
     readonly stream: Readable;
     unlink(): Promise<string>;
     setMeta(meta: Partial<IAssetMeta>): Promise<any>;
@@ -89,12 +95,19 @@ export interface IAssetUploadOpts {
     chunkSizeBytes?: number;
     contentType?: string;
     metadata?: IAssetMeta;
+    id?: ObjectId;
 }
 
 export interface IAssetDriver {
     openUploadStream(filename: string, opts?: IAssetUploadOpts): IAssetUploadStream;
     openDownloadStream(id: ObjectId): Readable;
     delete(id: ObjectId): Promise<void>;
+}
+
+export interface IAssetDriverConfig {
+    name: string;
+    type: 'grid' | 'local';
+    path: string;
 }
 
 export interface IAssetTypeDetector {
@@ -111,8 +124,8 @@ export interface IAssetModuleOpts {
     localDir?: string;
     // Max file size in bytes
     maxSize?: number;
-    // Type of asset driver
-    driver?: Type<IAssetDriver>;
+    // Asset driver configs
+    drivers?: IAssetDriverConfig[];
     // Type of asset type detector
     typeDetector?: Type<IAssetTypeDetector>;
     // Type of asset processor
@@ -137,11 +150,7 @@ export const fontProps = [
 
 export const MAX_FILE_SIZE: FactoryToken<number> = Symbol.for('ASSET_MAX_FILE_SIZE');
 
-export const LOCAL_DIR: FactoryToken<string> = Symbol.for('ASSET_LOCAL_DIR');
-
-export const GRID_CONNECTION: FactoryToken<Connection> = Symbol.for('ASSET_GRID_CONNECTION');
-
-export const ASSET_DRIVER: FactoryToken<IAssetDriver> = Symbol.for('ASSET_DRIVER');
+export const ASSET_DRIVERS: FactoryToken<Map<string, IAssetDriver>> = Symbol.for('ASSET_DRIVERS');
 
 export const ASSET_TYPE_DETECTOR: FactoryToken<IAssetTypeDetector> = Symbol.for('ASSET_TYPE_DETECTOR');
 

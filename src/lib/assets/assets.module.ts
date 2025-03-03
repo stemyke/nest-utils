@@ -1,21 +1,23 @@
 import { DynamicModule, Module, Provider } from '@nestjs/common';
-import { MongooseModule } from '@nestjs/mongoose';
+import { getConnectionToken, MongooseModule } from '@nestjs/mongoose';
 
 import { IModuleOptionsProvider } from '../common-types';
 import {
     createRootModule,
     createRootModuleAsync,
     FromOptionsProviders,
+    tempPath,
 } from '../utils';
 
 import {
-    ASSET_DRIVER,
+    IAssetDriver,
+    IAssetDriverConfig,
+    IAssetModuleOpts,
+    MAX_FILE_SIZE,
+    ASSET_DRIVERS,
     ASSET_MODULE_OPTIONS,
     ASSET_PROCESSOR,
-    ASSET_TYPE_DETECTOR,
-    IAssetModuleOpts,
-    LOCAL_DIR,
-    MAX_FILE_SIZE,
+    ASSET_TYPE_DETECTOR
 } from './common';
 
 import { AssetGridDriver, AssetLocalDriver } from './drivers';
@@ -26,14 +28,13 @@ import { AssetFileTypeService } from './asset-file-type.service';
 
 import { AssetsController } from './assets.controller';
 import { AssetsService } from './assets.service';
+import { Connection } from 'mongoose';
 
 function createProviders(extraProviders?: Provider[]): Provider[] {
     return new FromOptionsProviders(ASSET_MODULE_OPTIONS)
         .add(
             AssetResolverService,
             AssetsService,
-            AssetGridDriver,
-            AssetLocalDriver,
             AssetFileTypeService,
             AssetProcessorService,
             SeekableInterceptor,
@@ -42,8 +43,46 @@ function createProviders(extraProviders?: Provider[]): Provider[] {
         .useValue(MAX_FILE_SIZE, (opts) =>
             isNaN(opts.maxSize) ? 100 * 1024 * 1024 : opts.maxSize
         )
-        .useValue(LOCAL_DIR, (opts) => opts.localDir || 'assets_files')
-        .useType(ASSET_DRIVER, (opts) => opts.driver || AssetLocalDriver)
+        .useValue(ASSET_DRIVERS, async (opts, resolve) => {
+            const drivers =
+                opts.drivers ||
+                ([
+                    {
+                        name: 'assets',
+                        type: 'grid',
+                    },
+                ] as IAssetDriverConfig[]);
+            const map = new Map<string, IAssetDriver>();
+            const connection = (await resolve(
+                getConnectionToken()
+            )) as Connection;
+            for (const config of drivers) {
+                if (!config.name) {
+                    throw new Error(`Asset driver config should have a name!`);
+                }
+                switch (config.type) {
+                    case 'grid':
+                        map.set(
+                            config.name,
+                            new AssetGridDriver(
+                                connection,
+                                config.path || 'assets'
+                            )
+                        );
+                        break;
+                    default:
+                        map.set(
+                            config.name,
+                            new AssetLocalDriver(config.path || 'assets_files')
+                        );
+                }
+            }
+            map.set(
+                'temp',
+                new AssetLocalDriver(await tempPath('data', 'temp_files'))
+            );
+            return map;
+        })
         .useType(
             ASSET_TYPE_DETECTOR,
             (opts) => opts.typeDetector || AssetFileTypeService

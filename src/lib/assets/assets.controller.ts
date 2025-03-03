@@ -59,7 +59,8 @@ export class AssetsController {
             const asset = await this.assets.writeBuffer(
                 file.buffer,
                 { filename: file.filename },
-                await this.typeDetector.detect(file)
+                await this.typeDetector.detect(file),
+                'temp'
             );
             return asset.toJSON();
         } catch (e) {
@@ -135,7 +136,11 @@ export class AssetsController {
         if (!asset) {
             throw new BadRequestException(`Asset with id: '${id}' not found.`);
         }
-        return asset.metadata;
+        return {
+            ...asset.metadata,
+            contentType: asset.contentType,
+            bucket: asset.bucket
+        };
     }
 
     protected async getAsset(

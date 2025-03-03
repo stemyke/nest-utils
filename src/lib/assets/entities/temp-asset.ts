@@ -4,19 +4,26 @@ import type { ObjectId } from 'mongodb';
 import { Types } from 'mongoose';
 import { IImageParams } from '../../common-types';
 import { bufferToStream, streamToBuffer, toImage } from '../../utils';
-import { IAsset, IAssetMeta } from '../common';
+import { IAsset, IAssetDriver, IAssetMeta } from '../common';
 
 export class TempAsset implements IAsset {
 
     readonly oid: ObjectId;
+    readonly driver: IAssetDriver;
     readonly id: string;
     readonly createdAt: Date;
+
+    get bucket(): string {
+        return 'temp';
+    }
+
     readonly stream: Readable
 
     protected buffer: Buffer;
 
     constructor(src: Readable | Buffer, readonly filename: string, readonly contentType: string, readonly metadata: IAssetMeta) {
         this.oid = new Types.ObjectId();
+        this.driver = null;
         this.id = this.oid.toHexString();
         this.createdAt = new Date();
         this.stream = src instanceof Buffer

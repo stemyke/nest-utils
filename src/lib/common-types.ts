@@ -27,13 +27,15 @@ export interface IUnwindOptions {
 // Use this to ensure return types
 export type FactoryToken<R = any> = symbol & { __type?: R };
 
-interface Func {
+export interface Func {
     apply(this: Callable, thisArg: any, argArray?: any): any;
     call(this: Callable, thisArg: any, ...argArray: any[]): any;
 
     prototype: any;
     readonly length: number;
 }
+
+export type InstanceToken = Type | string | symbol;
 
 export interface Callable extends Func {
     (...args: any[]): any;
@@ -144,4 +146,7 @@ export type AsyncOptionsTypeProvider<T extends AsyncOptions> =
 export type AsyncProviders<T extends AsyncOptions> =
     [AsyncOptionsProvider<T>] | [AsyncOptionsProvider<T>, AsyncOptionsTypeProvider<T>];
 
-export type FromOptionsFactory<T extends AsyncOptions, R = any> = (opts: T) => R | Promise<R>;
+export type FromOptionsInstanceResolve = (token: InstanceToken) => Promise<any>;
+
+export type FromOptionsFactory<T extends AsyncOptions, R = any> = (opts: T, resolve: FromOptionsInstanceResolve)
+    => R | Promise<R>;

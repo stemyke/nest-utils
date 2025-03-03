@@ -12,7 +12,7 @@ import {
     FactoryToken,
     FromOptionsFactory,
     IModuleOptionsFactory,
-    IModuleOptionsProvider,
+    IModuleOptionsProvider, InstanceToken
 } from '../common-types';
 
 export function isNullOrUndefined(value: any): boolean {
@@ -208,10 +208,13 @@ export class FromOptionsProviders<O extends AsyncOptions> {
         return this;
     }
 
-    useValue<T>(provide: FactoryToken<T>, useFactory: FromOptionsFactory<O, T>) {
+    useValue<T>(provide: FactoryToken<T>, factory: FromOptionsFactory<O, T>) {
         return this.add({
             provide,
-            useFactory,
+            useFactory: async (opts: O, moduleRef: ModuleRef) => {
+                const resolve = (token: InstanceToken) => this.resolve(moduleRef, token);
+                return factory(opts, resolve);
+            },
             inject: [this.token, ModuleRef]
         });
     }
@@ -220,17 +223,9 @@ export class FromOptionsProviders<O extends AsyncOptions> {
         return this.add({
             provide,
             useFactory: async (opts: O, moduleRef: ModuleRef) => {
-                const type = await factory(opts);
-                try {
-                    // Try to use internal API-s
-                    const link = moduleRef['instanceLinksHost'].get(type);
-                    await link.wrapperRef.settlementSignal['settledPromise'];
-                } catch (e) {
-                    // Magic timeout
-                    console.log('Using magic timeout', e);
-                    await promiseTimeout(50);
-                }
-                return moduleRef.resolve(type, null, {strict: false});
+                const resolve = (token: InstanceToken) => this.resolve(moduleRef, token);
+                const type = await factory(opts, resolve);
+                return this.resolve(moduleRef, type);
             },
             inject: [this.token, ModuleRef]
         });
@@ -238,6 +233,19 @@ export class FromOptionsProviders<O extends AsyncOptions> {
 
     asArray(): Provider[] {
         return [...this.providers];
+    }
+
+    protected async resolve(moduleRef: ModuleRef, token: InstanceToken): Promise<any> {
+        try {
+            // Try to use internal API-s
+            const link = moduleRef['instanceLinksHost'].get(token);
+            await link.wrapperRef.settlementSignal['settledPromise'];
+        } catch (e) {
+            // Magic timeout
+            console.log('Using magic timeout', e);
+            await promiseTimeout(50);
+        }
+        return moduleRef.resolve(token, null, {strict: false});
     }
 }
 
