@@ -103,7 +103,12 @@ export class MailerService {
                 ? ''
                 : this.templates.translate(language, opts.subject, context);
         }
-        html = juice(html);
+        html = juice(html, {
+            resolveCSSVariables: true,
+            applyWidthAttributes: false,
+            applyHeightAttributes: false,
+            applyAttributesTableElements: false,
+        });
         const pattern = /<body[^>]*>([\s\S]*?)<\/body>/i;
         const match = html.match(pattern);
         return match ? match[1].trim() : html;
