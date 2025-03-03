@@ -11,6 +11,8 @@ export class AssetGridDriver implements IAssetDriver {
 
     constructor(@InjectConnection() connection: Connection) {
         this.bucket = new GridFSBucket(connection.db, { bucketName: 'assets' });
+        connection.db.collection(`assets.chunks`).createIndex({ files_id: 1, n: 1 }, { unique: true } );
+        connection.db.collection(`assets.files`).createIndex({ filename: 1, uploadDate: 1 } );
     }
 
     openUploadStream(filename: string, opts?: IAssetUploadOpts) {
