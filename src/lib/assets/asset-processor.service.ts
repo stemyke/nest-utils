@@ -10,7 +10,7 @@ import {
     imageTypes,
     videoTypes,
 } from './common';
-import { generateVideoThumbnail, streamToBuffer } from '../utils';
+import { ffprobe, generateVideoThumbnail, streamToBuffer, tempWrite } from '../utils';
 
 const sharp = sharp_;
 const fontKit = fontKit_;
@@ -36,10 +36,6 @@ export class AssetProcessorService implements IAssetProcessor {
 
     static isImage(contentType: string): boolean {
         return imageTypes.indexOf(contentType) >= 0;
-    }
-
-    static isVideo(contentType: string): boolean {
-        return videoTypes.indexOf(contentType) >= 0;
     }
 
     static async copyImageMeta(buffer: Buffer, metadata: IAssetMeta, fileType: IFileType): Promise<Buffer> {
@@ -69,6 +65,17 @@ export class AssetProcessorService implements IAssetProcessor {
         return output.data;
     }
 
+    static isVideo(contentType: string): boolean {
+        return videoTypes.indexOf(contentType) >= 0;
+    }
+
+    static async copyVideoMeta(buffer: Buffer, metadata: IAssetMeta): Promise<Buffer> {
+        metadata.tempFfmpegPath = await tempWrite(buffer, 'video');
+        const info = await ffprobe(metadata.tempFfmpegPath);
+        Object.assign(metadata, info);
+        return buffer;
+    }
+
     static isFont(contentType: string): boolean {
         return fontTypes.indexOf(contentType) >= 0;
     }
@@ -85,6 +92,9 @@ export class AssetProcessorService implements IAssetProcessor {
         if (AssetProcessorService.isImage(fileType.mime)) {
             buffer = await AssetProcessorService.copyImageMeta(buffer, metadata, fileType);
         }
+        if (AssetProcessorService.isVideo(fileType.mime)) {
+            buffer = await AssetProcessorService.copyVideoMeta(buffer, metadata);
+        }
         if (AssetProcessorService.isFont(fileType.mime)) {
             AssetProcessorService.copyFontMeta(buffer, metadata);
         }
@@ -93,7 +103,7 @@ export class AssetProcessorService implements IAssetProcessor {
 
     async preview(buffer: Buffer, metadata: IAssetMeta, fileType: IFileType): Promise<Buffer> {
         if (AssetProcessorService.isVideo(fileType.mime)) {
-            const thumbnail = await generateVideoThumbnail(buffer);
+            const thumbnail = await generateVideoThumbnail(metadata.tempFfmpegPath || buffer);
             return streamToBuffer(thumbnail);
         }
         return null;

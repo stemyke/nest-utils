@@ -4,6 +4,7 @@ export {
     tempPath,
     tempWrite,
     generateVideoThumbnail,
+    ffprobe,
     fetchBuffer,
     bufferToStream,
     streamToBuffer,

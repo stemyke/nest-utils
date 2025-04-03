@@ -5,7 +5,7 @@ import { createReadStream, realpathSync } from 'fs';
 import { mkdir, writeFile } from 'fs/promises';
 import { basename, dirname, join } from 'path';
 import { randomUUID } from 'crypto';
-import ffmpeg from 'fluent-ffmpeg';
+import ffmpeg, { FfprobeStream } from 'fluent-ffmpeg';
 import Mimetics from 'mimetics';
 import axios from 'axios';
 import {
@@ -39,14 +39,14 @@ export async function tempPath(filePath: string) {
     return path;
 }
 
-export async function tempWrite(content: string | Buffer, filePath: string) {
+export async function tempWrite(content: Buffer, filePath: string) {
     const path = await tempPath(filePath);
     await writeFile(path, content);
     return path;
 }
 
-export async function generateVideoThumbnail(buffer: Buffer) {
-    const input = await tempWrite(buffer, 'video');
+export async function generateVideoThumbnail(src: string | Buffer) {
+    const input = isString(src) ? src : await tempWrite(src, 'video');
     const output = await tempPath('thumbnail.png');
     return new Promise<Readable>((resolve, reject) => {
         ffmpeg(input)
@@ -61,6 +61,20 @@ export async function generateVideoThumbnail(buffer: Buffer) {
                 folder: dirname(output),
                 filename: basename(output)
             });
+    });
+}
+
+export async function ffprobe(path: string): Promise<FfprobeStream> {
+    return new Promise((resolve, reject) => {
+        ffmpeg.ffprobe(path, (err, data) => {
+            if (err) {
+                reject(err);
+                return;
+            }
+            const streams = (data.streams?.filter(s => s.codec_type === 'video') || [])
+                .sort((a, b) => b.height - a.height);
+            resolve(streams[0] ?? {index: 0});
+        })
     });
 }
 

@@ -57,7 +57,27 @@ export interface IAssetMeta extends IImageMeta {
     firstDownload?: Date;
     lastDownload?: Date;
     preview?: ObjectId | string;
+    /**
+     * A public display URL if the used asset driver supports it (Like Amazon S3)
+     */
     publicUrl?: string;
+    /**
+     * Temp path when parsing video metadata
+     */
+    tempFfmpegPath?: string;
+    /**
+     * Width for image/video files
+     */
+    width?: number;
+    /**
+     * Height for image/video files
+     */
+    height?: number;
+    /**
+     * Video bitrate in bytes/s
+     */
+    bit_rate?: number
+    // Other props
     [prop: string]: any;
 }
 
