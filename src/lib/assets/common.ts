@@ -119,7 +119,7 @@ export interface IAssetModuleOpts {
     assetProcessor?: Type<IAssetProcessor>;
 }
 
-export const imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/svg+xml'];
+export const imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/svg+xml'];
 
 export const videoTypes = ['video/mp4', 'video/webm', 'video/ogg'];
 
