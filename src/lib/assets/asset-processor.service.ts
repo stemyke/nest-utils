@@ -62,7 +62,10 @@ export class AssetProcessorService implements IAssetProcessor {
         }
         const output = await sharp(buffer).rotate().toBuffer({resolveWithObject: true});
         Object.assign(metadata, output.info);
-        return output.data;
+        if (fileType.mime === 'image/jpg' || fileType.mime === 'image/jpeg') {
+            return output.data;
+        }
+        return buffer;
     }
 
     static isVideo(contentType: string): boolean {
