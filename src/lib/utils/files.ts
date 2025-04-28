@@ -58,7 +58,7 @@ export async function generateVideoThumbnail(src: string | Buffer) {
                 reject(err);
             })
             .thumbnail({
-                timestamps: [1],
+                timestamps: [0.001],
                 folder: dirname(output),
                 filename: basename(output)
             });
