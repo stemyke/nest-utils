@@ -49,14 +49,6 @@ export class AssetsController {
         readonly assetResolver: AssetResolverService
     ) {}
 
-    protected async generatePreview(file: IUploadedFile, metadata: IAssetMeta, fileType: IFileType): Promise<void> {
-        const preview = await this.assetProcessor.preview(file, metadata, fileType);
-        if (!preview) return;
-        const previewType = await fileTypeFromBuffer(preview);
-        const asset = await this.assets.writeBuffer(preview, {}, previewType);
-        metadata.preview = asset?.oid;
-    }
-
     @Post('')
     @UseInterceptors(FileInterceptor('file', {storage: diskStorage({})}))
     async upload(@UploadedFile('file') file: IUploadedFile) {
@@ -68,18 +60,14 @@ export class AssetsController {
                     )}' by: ${formatSize(file.size - this.maxFileSize)}`
                 );
             }
-            const meta = {} as IAssetMeta;
+            const meta = { filename: file.filename } as IAssetMeta;
             const fileType: IFileType = {
                 ext: file.originalname.split('.').pop(),
                 mime: file.mimetype
             };
             file = await this.assetProcessor.process(file, meta, fileType);
             await this.generatePreview(file, meta, fileType);
-            const asset = await this.assets.write(
-                createReadStream(file.path),
-                { filename: file.filename },
-                fileType
-            );
+            const asset = await this.assets.write(createReadStream(file.path), meta, fileType);
             return asset.toJSON();
         } catch (e) {
             const msg = e?.message || e || 'Unknown error';
@@ -218,5 +206,13 @@ export class AssetsController {
             type: asset.contentType,
             length: asset.metadata.length,
         });
+    }
+
+    protected async generatePreview(file: IUploadedFile, metadata: IAssetMeta, fileType: IFileType): Promise<void> {
+        const preview = await this.assetProcessor.preview(file, metadata, fileType);
+        if (!preview) return;
+        const previewType = await fileTypeFromBuffer(preview);
+        const asset = await this.assets.writeBuffer(preview, {}, previewType);
+        metadata.preview = asset?.oid;
     }
 }
