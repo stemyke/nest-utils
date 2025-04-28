@@ -17,6 +17,7 @@ import {
 import { isBoolean, isInterface, isString } from './misc';
 import type { Region } from 'sharp';
 import sharp_ from 'sharp';
+import { copyStream } from './streams';
 
 const sharp = sharp_;
 
@@ -64,9 +65,10 @@ export async function generateVideoThumbnail(src: string | Buffer) {
     });
 }
 
-export async function ffprobe(path: string): Promise<FfprobeStream> {
+export async function ffprobe(src: Readable | string): Promise<FfprobeStream> {
+    const input = typeof src === "string" ? src : copyStream(src) as any;
     return new Promise((resolve, reject) => {
-        ffmpeg.ffprobe(path, (err, data) => {
+        ffmpeg.ffprobe(input, (err, data) => {
             if (err) {
                 reject(err);
                 return;
@@ -83,24 +85,30 @@ export async function fetchBuffer(url: string): Promise<Buffer> {
     return Buffer.from(res.data);
 }
 
+export async function fetchStream(url: string): Promise<Readable> {
+    const res = await axios.get(url, {responseType: 'stream'});
+    return Readable.from(res.data);
+}
+
 export function bufferToStream(buffer: Buffer): Readable {
     return Readable.from(buffer);
 }
 
 export function streamToBuffer(stream: Readable): Promise<Buffer> {
+    const copy = copyStream(stream);
     return new Promise<Buffer>((resolve, reject) => {
         const concat = [];
-        stream.on('data', data => {
+        copy.on('data', data => {
             concat.push(data);
         });
-        stream.on('error', reject);
-        stream.on('end', () => {
+        copy.on('error', reject);
+        copy.on('end', () => {
             resolve(Buffer.concat(concat));
         });
-        stream.on('close', () => {
+        copy.on('close', () => {
             resolve(Buffer.concat(concat));
         });
-        stream.on('pause', () => console.log('pause'));
+        copy.on('pause', () => console.log('pause'));
     })
 }
 

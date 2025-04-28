@@ -19,9 +19,10 @@ export class AssetLocalDriver implements IAssetDriver {
         const id = new Types.ObjectId();
         const dir = `${this.dir}/${id.toHexString()}`;
         mkdirSync(dir, { recursive: true });
-        const stream = createWriteStream(
+        const ws = createWriteStream(
             `${dir}/file.bin`
-        ) as IAssetUploadStream;
+        );
+        const stream = ws as IAssetUploadStream;
         stream.id = id;
         stream.done = false;
         stream.on('finish', () => {
@@ -31,6 +32,7 @@ export class AssetLocalDriver implements IAssetDriver {
                 JSON.stringify(opts?.metadata || {})
             );
             stream.done = true;
+            stream.length = ws.bytesWritten;
         });
         return stream;
     }

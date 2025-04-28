@@ -13,19 +13,12 @@ export interface IUploadedFile {
     mimetype: string;
     /** Size of the file in bytes. */
     size: number;
-    /**
-     * A readable stream of this file. Only available to the `_handleFile`
-     * callback for custom `StorageEngine`s.
-     */
-    stream: Readable;
     /** `DiskStorage` only: Directory to which this file has been uploaded. */
     destination: string;
     /** `DiskStorage` only: Name of this file within `destination`. */
     filename: string;
     /** `DiskStorage` only: Full path to the uploaded file. */
     path: string;
-    /** `MemoryStorage` only: A Buffer containing the entire file. */
-    buffer: Buffer;
 }
 
 export interface IUploadFromUrlBody {
@@ -61,10 +54,6 @@ export interface IAssetMeta extends IImageMeta {
      * A public display URL if the used asset driver supports it (Like Amazon S3)
      */
     publicUrl?: string;
-    /**
-     * Temp path when parsing video metadata
-     */
-    tempFfmpegPath?: string;
     /**
      * Width for image/video files
      */
@@ -103,6 +92,7 @@ export interface IAsset {
 export interface IAssetUploadStream extends Writable {
     id?: ObjectId;
     done?: boolean;
+    length?: number;
 }
 
 export interface IAssetUploadOpts {
@@ -118,12 +108,12 @@ export interface IAssetDriver {
 }
 
 export interface IAssetTypeDetector {
-    detect(file: IUploadedFile): Promise<IFileType>;
+    detect(buffer: Buffer): Promise<IFileType>;
 }
 
 export interface IAssetProcessor {
-    process(buffer: Buffer, metadata: IAssetMeta, fileType: IFileType): Promise<Buffer>;
-    preview(buffer: Buffer, metadata: IAssetMeta, fileType: IFileType): Promise<Buffer>;
+    process(file: IUploadedFile, metadata: IAssetMeta, fileType: IFileType): Promise<IUploadedFile>;
+    preview(file: IUploadedFile, metadata: IAssetMeta, fileType: IFileType): Promise<Buffer>;
 }
 
 export interface IAssetModuleOpts {

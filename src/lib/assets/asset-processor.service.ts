@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { readFile } from 'fs/promises';
 import fontKit_, { Font } from 'fontkit';
 import sharp_ from 'sharp';
 import { FontFormat, IFileType } from '../common-types';
@@ -8,9 +9,11 @@ import {
     IAssetMeta,
     IAssetProcessor,
     imageTypes,
+    IUploadedFile,
     videoTypes,
 } from './common';
-import { ffprobe, generateVideoThumbnail, streamToBuffer, tempWrite } from '../utils';
+import { ffprobe, generateVideoThumbnail, streamToBuffer } from '../utils';
+import { join } from 'path';
 
 const sharp = sharp_;
 const fontKit = fontKit_;
@@ -38,9 +41,10 @@ export class AssetProcessorService implements IAssetProcessor {
         return imageTypes.indexOf(contentType) >= 0;
     }
 
-    static async copyImageMeta(buffer: Buffer, metadata: IAssetMeta, fileType: IFileType): Promise<Buffer> {
+    static async copyImageMeta(file: IUploadedFile, metadata: IAssetMeta, fileType: IFileType): Promise<IUploadedFile> {
         if (fileType.mime === 'image/svg+xml') {
-            const match = /<svg([^<>]+)>/gi.exec(buffer.toString('utf8'));
+            const content = await readFile(file.path, 'utf8');
+            const match = /<svg([^<>]+)>/gi.exec(content);
             if (match && match.length > 1) {
                 const attrs = match[1].match(/([a-z]+)='([^']+)'/gi);
                 attrs.forEach(attr => {
@@ -58,55 +62,57 @@ export class AssetProcessorService implements IAssetProcessor {
                     metadata.svgSize = {x: metadata.width, y: metadata.height};
                 }
             }
-            return buffer;
+            return file;
         }
-        const output = await sharp(buffer).rotate().toBuffer({resolveWithObject: true});
-        Object.assign(metadata, output.info);
+        const path = join(file.destination, `${file.filename.replace(/\./, '-')}-conv.${fileType.ext}`);
+        const filename = path.replace(file.destination, '');
+        const output = await sharp(file.path).rotate().toFile(path);
+        Object.assign(metadata, output);
         if (fileType.mime === 'image/jpg' || fileType.mime === 'image/jpeg') {
-            return output.data;
+            return {...file, filename, path};
         }
-        return buffer;
+        return file;
     }
 
     static isVideo(contentType: string): boolean {
         return videoTypes.indexOf(contentType) >= 0;
     }
 
-    static async copyVideoMeta(buffer: Buffer, metadata: IAssetMeta): Promise<Buffer> {
-        metadata.tempFfmpegPath = await tempWrite(buffer, 'video');
-        const info = await ffprobe(metadata.tempFfmpegPath);
+    static async copyVideoMeta(file: IUploadedFile, metadata: IAssetMeta): Promise<IUploadedFile> {
+        const info = await ffprobe(file.path);
         Object.assign(metadata, info);
-        return buffer;
+        return file;
     }
 
     static isFont(contentType: string): boolean {
         return fontTypes.indexOf(contentType) >= 0;
     }
 
-    static copyFontMeta(buffer: Buffer, metadata: IAssetMeta): void {
-        const font: Font = fontKit.create(buffer);
+    static async copyFontMeta(file: IUploadedFile, metadata: IAssetMeta): Promise<IUploadedFile> {
+        const font = await fontKit.open(file.path) as Font;
         metadata.format = AssetProcessorService.extractFontFormat(font);
         fontProps.forEach(prop => {
             metadata[prop] = font[prop];
         });
+        return file;
     }
 
-    async process(buffer: Buffer, metadata: IAssetMeta, fileType: IFileType): Promise<Buffer> {
+    async process(file: IUploadedFile, metadata: IAssetMeta, fileType: IFileType): Promise<IUploadedFile> {
         if (AssetProcessorService.isImage(fileType.mime)) {
-            buffer = await AssetProcessorService.copyImageMeta(buffer, metadata, fileType);
+            return await AssetProcessorService.copyImageMeta(file, metadata, fileType);
         }
         if (AssetProcessorService.isVideo(fileType.mime)) {
-            buffer = await AssetProcessorService.copyVideoMeta(buffer, metadata);
+            return await AssetProcessorService.copyVideoMeta(file, metadata);
         }
         if (AssetProcessorService.isFont(fileType.mime)) {
-            AssetProcessorService.copyFontMeta(buffer, metadata);
+            return await AssetProcessorService.copyFontMeta(file, metadata);
         }
-        return buffer;
+        return file;
     }
 
-    async preview(buffer: Buffer, metadata: IAssetMeta, fileType: IFileType): Promise<Buffer> {
+    async preview(file: IUploadedFile, metadata: IAssetMeta, fileType: IFileType): Promise<Buffer> {
         if (AssetProcessorService.isVideo(fileType.mime)) {
-            const thumbnail = await generateVideoThumbnail(metadata.tempFfmpegPath || buffer);
+            const thumbnail = await generateVideoThumbnail(file.path);
             return streamToBuffer(thumbnail);
         }
         return null;

@@ -6,6 +6,7 @@ export {
     generateVideoThumbnail,
     ffprobe,
     fetchBuffer,
+    fetchStream,
     bufferToStream,
     streamToBuffer,
     checkTextFileType,

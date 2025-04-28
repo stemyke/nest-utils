@@ -18,12 +18,13 @@ import { Readable } from 'stream';
 import { isValidObjectId } from 'mongoose';
 
 import { Public } from '../decorators';
-import { formatSize } from '../utils';
+import { fileTypeFromBuffer, formatSize } from '../utils';
 
 import {
-    ASSET_TYPE_DETECTOR,
+    ASSET_PROCESSOR,
     IAsset,
-    IAssetTypeDetector,
+    IAssetMeta,
+    IAssetProcessor,
     IUploadedFile,
     IUploadFromUrlBody,
     MAX_FILE_SIZE,
@@ -32,6 +33,9 @@ import { AssetImageParams } from './asset-image-params';
 import { AssetsService } from './assets.service';
 import { AssetResolverService } from './asset-resolver.service';
 import { SeekableInterceptor } from './interceptors';
+import { diskStorage } from 'multer';
+import { IFileType } from '../common-types';
+import { createReadStream } from 'fs';
 
 type AssetReqType = 'Image' | 'Preview' | 'Asset';
 
@@ -40,13 +44,21 @@ type AssetReqType = 'Image' | 'Preview' | 'Asset';
 export class AssetsController {
     constructor(
         @Inject(MAX_FILE_SIZE) readonly maxFileSize: number,
-        @Inject(ASSET_TYPE_DETECTOR) readonly typeDetector: IAssetTypeDetector,
+        @Inject(ASSET_PROCESSOR) readonly assetProcessor: IAssetProcessor,
         readonly assets: AssetsService,
         readonly assetResolver: AssetResolverService
     ) {}
 
+    protected async generatePreview(file: IUploadedFile, metadata: IAssetMeta, fileType: IFileType): Promise<void> {
+        const preview = await this.assetProcessor.preview(file, metadata, fileType);
+        if (!preview) return;
+        const previewType = await fileTypeFromBuffer(preview);
+        const asset = await this.assets.writeBuffer(preview, {}, previewType);
+        metadata.preview = asset?.oid;
+    }
+
     @Post('')
-    @UseInterceptors(FileInterceptor('file'))
+    @UseInterceptors(FileInterceptor('file', {storage: diskStorage({})}))
     async upload(@UploadedFile('file') file: IUploadedFile) {
         try {
             if (file.size > this.maxFileSize) {
@@ -56,10 +68,17 @@ export class AssetsController {
                     )}' by: ${formatSize(file.size - this.maxFileSize)}`
                 );
             }
-            const asset = await this.assets.writeBuffer(
-                file.buffer,
+            const meta = {} as IAssetMeta;
+            const fileType: IFileType = {
+                ext: file.originalname.split('.').pop(),
+                mime: file.mimetype
+            };
+            file = await this.assetProcessor.process(file, meta, fileType);
+            await this.generatePreview(file, meta, fileType);
+            const asset = await this.assets.write(
+                createReadStream(file.path),
                 { filename: file.filename },
-                await this.typeDetector.detect(file)
+                fileType
             );
             return asset.toJSON();
         } catch (e) {
