@@ -16,9 +16,10 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Readable } from 'stream';
 import { isValidObjectId } from 'mongoose';
+import type { FileTypeResult } from 'file-type';
 
 import { Public } from '../decorators';
-import { fileTypeFromBuffer, formatSize } from '../utils';
+import { formatSize } from '../utils';
 
 import {
     ASSET_PROCESSOR,
@@ -34,7 +35,6 @@ import { AssetsService } from './assets.service';
 import { AssetResolverService } from './asset-resolver.service';
 import { SeekableInterceptor } from './interceptors';
 import { diskStorage } from 'multer';
-import { IFileType } from '../common-types';
 import { createReadStream } from 'fs';
 
 type AssetReqType = 'Image' | 'Preview' | 'Asset';
@@ -61,7 +61,7 @@ export class AssetsController {
                 );
             }
             const meta = { filename: file.filename } as IAssetMeta;
-            const fileType: IFileType = {
+            const fileType: FileTypeResult = {
                 ext: file.originalname.split('.').pop(),
                 mime: file.mimetype
             };
@@ -208,11 +208,10 @@ export class AssetsController {
         });
     }
 
-    protected async generatePreview(file: IUploadedFile, metadata: IAssetMeta, fileType: IFileType): Promise<void> {
+    protected async generatePreview(file: IUploadedFile, metadata: IAssetMeta, fileType: FileTypeResult): Promise<void> {
         const preview = await this.assetProcessor.preview(file, metadata, fileType);
         if (!preview) return;
-        const previewType = await fileTypeFromBuffer(preview);
-        const asset = await this.assets.writeBuffer(preview, {}, previewType);
+        const asset = await this.assets.writeBuffer(preview);
         metadata.preview = asset?.oid;
     }
 }

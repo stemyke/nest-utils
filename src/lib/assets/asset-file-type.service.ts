@@ -1,11 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { IFileType } from '../common-types';
-import { fileTypeFromBuffer } from '../utils';
+import { fileTypeFromBuffer, FileTypeResult } from 'file-type';
 import { IAssetTypeDetector } from './common';
 
 @Injectable()
 export class AssetFileTypeService implements IAssetTypeDetector {
-    async detect(buffer: Buffer): Promise<IFileType> {
+    async detect(buffer: Buffer): Promise<FileTypeResult> {
         return fileTypeFromBuffer(buffer);
     }
 }

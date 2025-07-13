@@ -1,8 +1,8 @@
-import { InjectionToken, Type } from '@nestjs/common';
+import { Type } from '@nestjs/common';
 import { Readable, Writable } from 'stream';
 import type { ObjectId } from 'mongodb';
-import { Connection } from 'mongoose';
-import { FactoryToken, IFileType, IImageMeta, IImageParams } from '../common-types';
+import type { FileTypeResult } from 'file-type';
+import { FactoryToken, IImageMeta, IImageParams } from '../common-types';
 
 export interface IUploadedFile {
     /** Name of the form field associated with this file. */
@@ -65,7 +65,7 @@ export interface IAssetMeta extends IImageMeta {
     /**
      * Video bitrate in bytes/s
      */
-    bit_rate?: number
+    bit_rate?: number;
     // Other props
     [prop: string]: any;
 }
@@ -82,7 +82,10 @@ export interface IAsset {
     setMeta(meta: Partial<IAssetMeta>): Promise<any>;
     getBuffer(): Promise<Buffer>;
     download(metadata?: IAssetMeta): Promise<Readable>;
-    downloadImage(params?: IImageParams, metadata?: IAssetMeta): Promise<Readable>;
+    downloadImage(
+        params?: IImageParams,
+        metadata?: IAssetMeta,
+    ): Promise<Readable>;
     getImage(params?: IImageParams): Promise<Readable>;
     save(): Promise<any>;
     load(): Promise<this>;
@@ -102,18 +105,29 @@ export interface IAssetUploadOpts {
 }
 
 export interface IAssetDriver {
-    openUploadStream(filename: string, opts?: IAssetUploadOpts): IAssetUploadStream;
+    openUploadStream(
+        filename: string,
+        opts?: IAssetUploadOpts,
+    ): IAssetUploadStream;
     openDownloadStream(id: ObjectId): Readable;
     delete(id: ObjectId): Promise<void>;
 }
 
 export interface IAssetTypeDetector {
-    detect(buffer: Buffer): Promise<IFileType>;
+    detect(buffer: Buffer): Promise<FileTypeResult>;
 }
 
 export interface IAssetProcessor {
-    process(file: IUploadedFile, metadata: IAssetMeta, fileType: IFileType): Promise<IUploadedFile>;
-    preview(file: IUploadedFile, metadata: IAssetMeta, fileType: IFileType): Promise<Buffer>;
+    process(
+        file: IUploadedFile,
+        metadata: IAssetMeta,
+        fileType: FileTypeResult,
+    ): Promise<IUploadedFile>;
+    preview(
+        file: IUploadedFile,
+        metadata: IAssetMeta,
+        fileType: FileTypeResult,
+    ): Promise<Buffer>;
 }
 
 export interface IAssetModuleOpts {
@@ -129,32 +143,66 @@ export interface IAssetModuleOpts {
     assetProcessor?: Type<IAssetProcessor>;
 }
 
-export const imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/svg+xml'];
+export const imageTypes = [
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/gif',
+    'image/svg+xml',
+];
 
 export const videoTypes = ['video/mp4', 'video/webm', 'video/ogg'];
 
 export const fontTypes = [
-    'application/font-woff', 'application/font-woff2', 'application/x-font-opentype', 'application/x-font-truetype', 'application/x-font-datafork',
-    'font/woff', 'font/woff2', 'font/otf', 'font/ttf', 'font/datafork'
+    'application/font-woff',
+    'application/font-woff2',
+    'application/x-font-opentype',
+    'application/x-font-truetype',
+    'application/x-font-datafork',
+    'font/woff',
+    'font/woff2',
+    'font/otf',
+    'font/ttf',
+    'font/datafork',
 ];
 
 export const fontProps = [
-    'postscriptName', 'fullName', 'familyName', 'subfamilyName',
-    'copyright', 'version', 'unitsPerEm', 'ascent', 'descent', 'lineGap',
-    'underlinePosition', 'underlineThickness', 'italicAngle', 'capHeight',
-    'xHeight', 'numGlyphs', 'characterSet', 'availableFeatures'
+    'postscriptName',
+    'fullName',
+    'familyName',
+    'subfamilyName',
+    'copyright',
+    'version',
+    'unitsPerEm',
+    'ascent',
+    'descent',
+    'lineGap',
+    'underlinePosition',
+    'underlineThickness',
+    'italicAngle',
+    'capHeight',
+    'xHeight',
+    'numGlyphs',
+    'characterSet',
+    'availableFeatures',
 ];
 
-export const MAX_FILE_SIZE: FactoryToken<number> = Symbol.for('ASSET_MAX_FILE_SIZE');
+export const MAX_FILE_SIZE: FactoryToken<number> = Symbol.for(
+    'ASSET_MAX_FILE_SIZE',
+);
 
 export const LOCAL_DIR: FactoryToken<string> = Symbol.for('ASSET_LOCAL_DIR');
 
-export const GRID_CONNECTION: FactoryToken<Connection> = Symbol.for('ASSET_GRID_CONNECTION');
+export const ASSET_DRIVER: FactoryToken<IAssetDriver> =
+    Symbol.for('ASSET_DRIVER');
 
-export const ASSET_DRIVER: FactoryToken<IAssetDriver> = Symbol.for('ASSET_DRIVER');
+export const ASSET_TYPE_DETECTOR: FactoryToken<IAssetTypeDetector> = Symbol.for(
+    'ASSET_TYPE_DETECTOR',
+);
 
-export const ASSET_TYPE_DETECTOR: FactoryToken<IAssetTypeDetector> = Symbol.for('ASSET_TYPE_DETECTOR');
+export const ASSET_PROCESSOR: FactoryToken<IAssetProcessor> =
+    Symbol.for('ASSET_PROCESSOR');
 
-export const ASSET_PROCESSOR: FactoryToken<IAssetProcessor> = Symbol.for('ASSET_PROCESSOR');
-
-export const ASSET_MODULE_OPTIONS: FactoryToken<IAssetModuleOpts> = Symbol.for('ASSET_MODULE_OPTIONS');
+export const ASSET_MODULE_OPTIONS: FactoryToken<IAssetModuleOpts> = Symbol.for(
+    'ASSET_MODULE_OPTIONS',
+);

@@ -2,8 +2,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 import type { Collection, Filter, ObjectId } from 'mongodb';
 import { Connection, Types } from 'mongoose';
+import type { FileTypeResult } from 'file-type';
 
-import { IFileType } from '../common-types';
 import { bufferToStream, fetchBuffer } from '../utils';
 
 import {
@@ -33,13 +33,13 @@ export class AssetsService {
         this.collection = connection.db.collection("assets.metadata");
     }
 
-    async writeBuffer(buffer: Buffer, metadata: IAssetMeta = null, fileType: IFileType = null): Promise<IAsset> {
+    async writeBuffer(buffer: Buffer, metadata: IAssetMeta = null, fileType: FileTypeResult = null): Promise<IAsset> {
         fileType = fileType ?? await this.typeDetector.detect(buffer);
         metadata = metadata || {};
         return this.write(bufferToStream(buffer), metadata, fileType);
     }
 
-    async write(stream: Readable, metadata: IAssetMeta, fileType: IFileType): Promise<IAsset> {
+    async write(stream: Readable, metadata: IAssetMeta, fileType: FileTypeResult): Promise<IAsset> {
         const contentType = fileType.mime.trim();
         metadata = Object.assign({
             downloadCount: 0,
@@ -82,7 +82,7 @@ export class AssetsService {
         });
     }
 
-    async writeUrl(url: string, metadata: IAssetMeta = null, fileType: IFileType = null): Promise<IAsset> {
+    async writeUrl(url: string, metadata: IAssetMeta = null, fileType: FileTypeResult = null): Promise<IAsset> {
         metadata = metadata || {};
         metadata.filename = metadata.filename || url;
         metadata.url = url;

@@ -5,15 +5,9 @@ import { createReadStream, realpathSync } from 'fs';
 import { mkdir, writeFile } from 'fs/promises';
 import { basename, dirname, join } from 'path';
 import { randomUUID } from 'crypto';
+import got from 'got';
 import ffmpeg, { FfprobeStream } from 'fluent-ffmpeg';
-import Mimetics from 'mimetics';
-import axios from 'axios';
-import {
-    IFileType,
-    IImageCropInfo,
-    IImageMeta,
-    IImageParams,
-} from '../common-types';
+import { IImageCropInfo, IImageMeta, IImageParams } from '../common-types';
 import { isBoolean, isInterface, isString } from './misc';
 import type { Region } from 'sharp';
 import sharp_ from 'sharp';
@@ -60,34 +54,33 @@ export async function generateVideoThumbnail(src: string | Buffer) {
             .thumbnail({
                 timestamps: [0.001],
                 folder: dirname(output),
-                filename: basename(output)
+                filename: basename(output),
             });
     });
 }
 
 export async function ffprobe(src: Readable | string): Promise<FfprobeStream> {
-    const input = typeof src === "string" ? src : copyStream(src) as any;
+    const input = typeof src === 'string' ? src : (copyStream(src) as any);
     return new Promise((resolve, reject) => {
         ffmpeg.ffprobe(input, (err, data) => {
             if (err) {
                 reject(err);
                 return;
             }
-            const streams = (data.streams?.filter(s => s.codec_type === 'video') || [])
-                .sort((a, b) => b.height - a.height);
-            resolve(streams[0] ?? {index: 0});
-        })
+            const streams = (
+                data.streams?.filter((s) => s.codec_type === 'video') || []
+            ).sort((a, b) => b.height - a.height);
+            resolve(streams[0] ?? { index: 0 });
+        });
     });
 }
 
-export async function fetchBuffer(url: string): Promise<Buffer> {
-    const res = await axios.get(url, {responseType: 'arraybuffer'});
-    return Buffer.from(res.data);
+export function fetchBuffer(url: string): Promise<Buffer> {
+    return got(url).buffer();
 }
 
-export async function fetchStream(url: string): Promise<Readable> {
-    const res = await axios.get(url, {responseType: 'stream'});
-    return Readable.from(res.data);
+export function fetchStream(url: string): Readable {
+    return got.stream.get(url);
 }
 
 export function bufferToStream(buffer: Buffer): Readable {
@@ -98,7 +91,7 @@ export function streamToBuffer(stream: Readable): Promise<Buffer> {
     const copy = copyStream(stream);
     return new Promise<Buffer>((resolve, reject) => {
         const concat = [];
-        copy.on('data', data => {
+        copy.on('data', (data) => {
             concat.push(data);
         });
         copy.on('error', reject);
@@ -109,43 +102,14 @@ export function streamToBuffer(stream: Readable): Promise<Buffer> {
             resolve(Buffer.concat(concat));
         });
         copy.on('pause', () => console.log('pause'));
-    })
-}
-
-export function checkTextFileType(type: IFileType): boolean {
-    return type.mime.indexOf("text") >= 0 || type.mime.indexOf("xml") >= 0;
-}
-
-export function fixTextFileType(type: IFileType, buffer: Buffer): IFileType {
-    const text = buffer.toString("utf8");
-    if (text.indexOf("<svg") >= 0) {
-        return {ext: "svg", mime: "image/svg+xml"};
-    }
-    return type;
-}
-
-export async function fileTypeFromBuffer(buffer: Buffer): Promise<IFileType> {
-    const mimetics = new Mimetics();
-    const type: IFileType = await mimetics.parseAsync(buffer);
-    if (!type) {
-        throw new Error(`Can't determine file type of buffer`);
-    }
-    if (checkTextFileType(type)) {
-        return fixTextFileType(type, buffer);
-    }
-    return type;
-}
-
-export async function fileTypeFromStream(stream: Readable): Promise<IFileType> {
-    const buffer = await streamToBuffer(stream);
-    return fileTypeFromBuffer(buffer);
+    });
 }
 
 const cropInterface = {
     x: 'number',
     y: 'number',
     w: 'number',
-    h: 'number'
+    h: 'number',
 };
 
 function toCropRegion(cropInfo: string | boolean | IImageCropInfo): Region {
@@ -162,12 +126,15 @@ function toCropRegion(cropInfo: string | boolean | IImageCropInfo): Region {
         width: Math.round(crop.w),
         height: Math.round(crop.h),
         top: Math.round(crop.y),
-        left: Math.round(crop.x)
+        left: Math.round(crop.x),
     };
 }
 
-export async function toImage<T = Buffer | Readable>(src: T, params?: IImageParams, meta?: IImageMeta): Promise<T> {
-
+export async function toImage<T = Buffer | Readable>(
+    src: T,
+    params?: IImageParams,
+    meta?: IImageMeta,
+): Promise<T> {
     // Default params and meta
     params = params || {};
     meta = meta || {};
@@ -176,27 +143,41 @@ export async function toImage<T = Buffer | Readable>(src: T, params?: IImagePara
     const crop = toCropRegion(meta.crop);
 
     // Return the src if there are no params and no default crop exists
-    if (meta.extension === 'svg' || (Object.keys(params).length == 0 && !crop)) {
+    if (
+        meta.extension === 'svg' ||
+        (Object.keys(params).length == 0 && !crop)
+    ) {
         return src;
     }
 
     // Parse params
-    params.rotation = isNaN(params.rotation) ? 0 : Math.round(params.rotation / 90) * 90;
-    params.canvasScaleX = isNaN(params.canvasScaleX) ? 1 : Number(params.canvasScaleX);
-    params.canvasScaleY = isNaN(params.canvasScaleY) ? 1 : Number(params.canvasScaleY);
+    params.rotation = isNaN(params.rotation)
+        ? 0
+        : Math.round(params.rotation / 90) * 90;
+    params.canvasScaleX = isNaN(params.canvasScaleX)
+        ? 1
+        : Number(params.canvasScaleX);
+    params.canvasScaleY = isNaN(params.canvasScaleY)
+        ? 1
+        : Number(params.canvasScaleY);
     params.scaleX = isNaN(params.scaleX) ? 1 : Number(params.scaleX);
     params.scaleY = isNaN(params.scaleY) ? 1 : Number(params.scaleY);
     params.crop = isBoolean(params.crop) ? params.crop : params.crop == 'true';
 
-    let buffer = src instanceof Readable ? await streamToBuffer(src) : src as any;
+    let buffer =
+        src instanceof Readable ? await streamToBuffer(src) : (src as any);
 
     try {
         // Get crop info
-        const cropBefore = toCropRegion(params.cropBefore || (params.crop ? meta.cropBefore : null));
-        const cropAfter = toCropRegion(params.cropAfter || (params.crop ? meta.cropAfter : null));
+        const cropBefore = toCropRegion(
+            params.cropBefore || (params.crop ? meta.cropBefore : null),
+        );
+        const cropAfter = toCropRegion(
+            params.cropAfter || (params.crop ? meta.cropAfter : null),
+        );
         // Get metadata
         let img = sharp(buffer);
-        let {width, height} = await img.metadata();
+        let { width, height } = await img.metadata();
         // Crop before resize
         if (cropBefore) {
             width = cropBefore.width;
@@ -210,16 +191,29 @@ export async function toImage<T = Buffer | Readable>(src: T, params?: IImagePara
         // Resize canvas
         const canvasScaleX = meta?.canvasScaleX || 1;
         const canvasScaleY = meta?.canvasScaleY || 1;
-        if (params.canvasScaleX !== canvasScaleX || params.canvasScaleY !== canvasScaleY) {
+        if (
+            params.canvasScaleX !== canvasScaleX ||
+            params.canvasScaleY !== canvasScaleY
+        ) {
             width = Math.round(width * params.canvasScaleX);
             height = Math.round(height * params.canvasScaleY);
-            img = img.resize({width, height, background: '#00000000', fit: 'contain'});
+            img = img.resize({
+                width,
+                height,
+                background: '#00000000',
+                fit: 'contain',
+            });
         }
         // Resize image
         if (params.scaleX !== 1 || params.scaleY !== 1) {
             width = Math.round(width * params.scaleX);
             height = Math.round(height * params.scaleY);
-            img = img.resize({width, height, background: '#00000000', fit: 'fill'});
+            img = img.resize({
+                width,
+                height,
+                background: '#00000000',
+                fit: 'fill',
+            });
         }
         // Crop after resize
         if (cropAfter) {

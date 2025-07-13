@@ -107,11 +107,6 @@ export interface IImageParams {
     [key: string]: any;
 }
 
-export interface IFileType {
-    ext: string;
-    mime: string;
-}
-
 export type FontFormat = "opentype" | "truetype" | "woff" | "woff2" | "datafork";
 
 // --- Translations ---

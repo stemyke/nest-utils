@@ -9,10 +9,6 @@ export {
     fetchStream,
     bufferToStream,
     streamToBuffer,
-    checkTextFileType,
-    fixTextFileType,
-    fileTypeFromBuffer,
-    fileTypeFromStream,
     toImage
 } from './files';
 

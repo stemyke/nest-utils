@@ -24,7 +24,6 @@ export {
     IImageCropInfo,
     IImageMeta,
     IImageParams,
-    IFileType,
     FontFormat,
     ITranslator,
     IModuleOptionsFactory,
