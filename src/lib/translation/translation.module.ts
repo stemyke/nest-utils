@@ -1,6 +1,6 @@
 import { DynamicModule, Module, Provider } from '@nestjs/common';
 
-import { IModuleOptionsProvider } from '../common-types';
+import { ModuleOptionsProvider } from '../common-types';
 import {
     createRootModule,
     createRootModuleAsync,
@@ -9,7 +9,7 @@ import {
 
 import {
     DICTIONARY_PROVIDER,
-    ITranslationModuleOpts,
+    TranslationModuleOpts,
     TRANSLATION_MODULE_OPTIONS,
     TRANSLATIONS_PATH,
 } from './common';
@@ -38,7 +38,7 @@ function createProviders(): Provider[] {
 })
 export class TranslationModule {
 
-    static forRoot(opts: ITranslationModuleOpts): DynamicModule {
+    static forRoot(opts: TranslationModuleOpts): DynamicModule {
         return createRootModule(
             TranslationModule,
             TRANSLATION_MODULE_OPTIONS,
@@ -47,7 +47,7 @@ export class TranslationModule {
         );
     }
 
-    static forRootAsync(opts: IModuleOptionsProvider<ITranslationModuleOpts>): DynamicModule {
+    static forRootAsync(opts: ModuleOptionsProvider<TranslationModuleOpts>): DynamicModule {
         return createRootModuleAsync(
             TranslationModule,
             TRANSLATION_MODULE_OPTIONS,

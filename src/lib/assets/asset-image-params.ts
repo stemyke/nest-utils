@@ -1,7 +1,7 @@
 import {IsBoolean, IsOptional, Max, Min} from 'class-validator';
-import {IImageParams} from '../common-types';
+import {ImageParams} from '../common-types';
 
-export class AssetImageParams implements IImageParams {
+export class AssetImageParams implements ImageParams {
 
     @Min(-360)
     @Max(360)

@@ -1,11 +1,11 @@
 import { Readable } from 'stream';
 import type { Collection, ObjectId } from 'mongodb';
 
-import { IAsset, IAssetDriver, IAssetMeta } from '../common';
-import { IImageParams } from '../../common-types';
+import { Asset, AssetDriver, AssetMeta } from '../common';
+import { ImageParams } from '../../common-types';
 import { isString, streamToBuffer, toImage } from '../../utils';
 
-export class Asset implements IAsset {
+export class StoredAsset implements Asset {
 
     get filename(): string {
         return this.data.filename;
@@ -19,7 +19,7 @@ export class Asset implements IAsset {
         return this.data.createdAt;
     }
 
-    get metadata(): IAssetMeta {
+    get metadata(): AssetMeta {
         return this.data.metadata;
     }
 
@@ -34,9 +34,9 @@ export class Asset implements IAsset {
     protected deleted: boolean;
 
     constructor(readonly oid: ObjectId,
-                protected data: Partial<IAsset>,
+                protected data: Partial<Asset>,
                 protected collection: Collection,
-                protected driver: IAssetDriver) {
+                protected driver: AssetDriver) {
         this.deleted = false;
     }
 
@@ -67,7 +67,7 @@ export class Asset implements IAsset {
         return this.id;
     }
 
-    async setMeta(metadata: Partial<IAssetMeta>) {
+    async setMeta(metadata: Partial<AssetMeta>) {
         metadata = Object.assign(this.metadata, metadata || {});
         await this.collection.updateOne({_id: this.oid}, {$set: {metadata}});
     }
@@ -76,7 +76,7 @@ export class Asset implements IAsset {
         return streamToBuffer(this.stream);
     }
 
-    async download(metadata?: IAssetMeta) {
+    async download(metadata?: AssetMeta) {
         metadata = Object.assign(this.metadata, metadata || {});
         metadata.downloadCount = isNaN(metadata.downloadCount) || !metadata.firstDownload
             ? 1
@@ -87,11 +87,11 @@ export class Asset implements IAsset {
         return this.stream;
     }
 
-    async getImage(params: IImageParams = null) {
+    async getImage(params: ImageParams = null) {
         return toImage(this.stream, params, this.metadata);
     }
 
-    async downloadImage(params?: IImageParams, metadata?: IAssetMeta) {
+    async downloadImage(params?: ImageParams, metadata?: AssetMeta) {
         return toImage(await this.download(metadata), params, this.metadata);
     }
 

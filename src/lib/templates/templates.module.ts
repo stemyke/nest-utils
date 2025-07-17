@@ -1,13 +1,13 @@
 import {DynamicModule, Module, Provider} from '@nestjs/common';
 
-import {IModuleOptionsProvider} from '../common-types';
+import {ModuleOptionsProvider} from '../common-types';
 import {
     createRootModule,
     createRootModuleAsync,
     FromOptionsProviders,
 } from '../utils';
 
-import {ITemplatesModuleOpts, TEMPLATES_DIR, TEMPLATES_MODULE_OPTIONS, TEMPLATES_TRANSLATOR} from './common';
+import {TemplatesModuleOpts, TEMPLATES_DIR, TEMPLATES_MODULE_OPTIONS, TEMPLATES_TRANSLATOR} from './common';
 import {TemplatesService} from './templates.service';
 import {StaticTranslator} from "./static.translator";
 
@@ -33,7 +33,7 @@ function createProviders(): Provider[] {
 })
 export class TemplatesModule {
 
-    static forRoot(opts: ITemplatesModuleOpts): DynamicModule {
+    static forRoot(opts: TemplatesModuleOpts): DynamicModule {
         return createRootModule(
             TemplatesModule,
             TEMPLATES_MODULE_OPTIONS,
@@ -42,7 +42,7 @@ export class TemplatesModule {
         );
     }
 
-    static forRootAsync(opts: IModuleOptionsProvider<ITemplatesModuleOpts>): DynamicModule {
+    static forRootAsync(opts: ModuleOptionsProvider<TemplatesModuleOpts>): DynamicModule {
         return createRootModuleAsync(
             TemplatesModule,
             TEMPLATES_MODULE_OPTIONS,

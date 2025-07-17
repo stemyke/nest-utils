@@ -4,13 +4,15 @@ export * from './lib/decorators';
 export * from './lib/pipes';
 export * from './lib/utils';
 export * from './lib/templates';
+export * from './lib/fixtures';
 export * from './lib/mailer';
 export * from './lib/translation';
+export * from './lib/bootstrap';
 
 export {
-    IMatchField,
-    IProjectOptions,
-    IUnwindOptions,
+    MatchField,
+    ProjectOptions,
+    UnwindOptions,
     FactoryToken,
     Callable,
     Constructor,
@@ -18,16 +20,18 @@ export {
     KeysOfType,
     OnlyOfType,
     PartialBy,
-    IPaginationParams,
-    IPaginationMeta,
-    IPagination,
-    IImageCropInfo,
-    IImageMeta,
-    IImageParams,
+    PaginationParams,
+    PaginationMeta,
+    PaginationData,
+    ImageCropInfo,
+    ImageMeta,
+    ImageParams,
     FontFormat,
-    ITranslator,
-    IModuleOptionsFactory,
-    IModuleOptionsProvider,
+    Fixture,
+    FixtureOutput,
+    Translator,
+    ModuleOptionsFactory,
+    ModuleOptionsProvider,
     AsyncOptions,
     AsyncOptionsProvider,
     AsyncOptionsTypeProvider,

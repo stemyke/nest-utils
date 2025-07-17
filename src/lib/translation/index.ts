@@ -3,6 +3,6 @@ export { TranslationService } from './translation.service';
 export { TranslationModule } from './translation.module';
 
 export {
-    IDictionaryProvider,
-    ITranslationModuleOpts
+    DictionaryProvider,
+    TranslationModuleOpts
 } from './common';

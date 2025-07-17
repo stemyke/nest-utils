@@ -1,16 +1,16 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { ITranslator } from '../common-types';
+import { Translator } from '../common-types';
 import { getValue, interpolate, isString } from '../utils';
-import { DICTIONARY_PROVIDER, IDictionaryProvider } from './common';
+import { DICTIONARY_PROVIDER, DictionaryProvider } from './common';
 
 @Injectable()
-export class TranslationService implements ITranslator {
+export class TranslationService implements Translator {
 
     protected promises: { [lang: string]: Promise<void> };
     protected dictionaries: { [lang: string]: Record<string, string> };
 
-    constructor(@Inject(DICTIONARY_PROVIDER) protected provider: IDictionaryProvider) {
+    constructor(@Inject(DICTIONARY_PROVIDER) protected provider: DictionaryProvider) {
         this.promises = {};
         this.dictionaries = {};
     }

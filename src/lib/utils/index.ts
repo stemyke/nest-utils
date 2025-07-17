@@ -75,5 +75,7 @@ export {
     interpolate,
     escapeRegex,
     toKeywords,
-    stripTags
+    stripTags,
+    ucFirst,
+    lcFirst
 } from './string';

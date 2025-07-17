@@ -30,3 +30,13 @@ export function toKeywords(str: string): string[] {
 export function stripTags(str: string): string {
     return str.replace(/<br>/g, '\n').replace(/(<([^>]+)>)/gi, '');
 }
+
+export function ucFirst(value: string): string {
+    if (!value) return "";
+    return value[0].toUpperCase() + value.substring(1);
+}
+
+export function lcFirst(value: string): string {
+    if (!value) return "";
+    return value[0].toLowerCase() + value.substring(1);
+}

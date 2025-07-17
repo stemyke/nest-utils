@@ -3,10 +3,10 @@ import { GridFSBucket, ObjectId } from 'mongodb';
 import { Injectable } from '@nestjs/common';
 import { InjectConnection } from '@nestjs/mongoose';
 
-import { IAssetDriver, IAssetUploadOpts } from '../common';
+import { AssetDriver, AssetUploadOpts } from '../common';
 
 @Injectable()
-export class AssetGridDriver implements IAssetDriver {
+export class AssetGridDriver implements AssetDriver {
     protected bucket: GridFSBucket;
 
     constructor(@InjectConnection() connection: Connection) {
@@ -15,7 +15,7 @@ export class AssetGridDriver implements IAssetDriver {
         connection.db.collection(`assets.files`).createIndex({ filename: 1, uploadDate: 1 } );
     }
 
-    openUploadStream(filename: string, opts?: IAssetUploadOpts) {
+    openUploadStream(filename: string, opts?: AssetUploadOpts) {
         return this.bucket.openUploadStream(filename, opts);
     }
 

@@ -2,9 +2,9 @@ import { Type } from '@nestjs/common';
 import { Readable, Writable } from 'stream';
 import type { ObjectId } from 'mongodb';
 import type { FileTypeResult } from 'file-type';
-import { FactoryToken, IImageMeta, IImageParams } from '../common-types';
+import { FactoryToken, ImageMeta, ImageParams } from '../common-types';
 
-export interface IUploadedFile {
+export interface FileInfo {
     /** Name of the form field associated with this file. */
     fieldname: string;
     /** Name of the file on the uploader's computer. */
@@ -21,11 +21,11 @@ export interface IUploadedFile {
     path: string;
 }
 
-export interface IUploadFromUrlBody {
+export interface UploadFromUrlBody {
     url: string;
 }
 
-export interface IStreamableOptions {
+export interface StreamableOptions {
     /**
      * The value that will be used for the `Content-Type` response header.
      * @default `"application/octet-stream"`
@@ -41,7 +41,7 @@ export interface IStreamableOptions {
     length?: number;
 }
 
-export interface IAssetMeta extends IImageMeta {
+export interface AssetMeta extends ImageMeta {
     filename?: string;
     extension?: string;
     length?: number;
@@ -70,77 +70,77 @@ export interface IAssetMeta extends IImageMeta {
     [prop: string]: any;
 }
 
-export interface IAsset {
+export interface Asset {
     readonly oid: ObjectId;
     readonly id: string;
     readonly filename: string;
     readonly contentType: string;
     readonly createdAt: Date;
-    readonly metadata: IAssetMeta;
+    readonly metadata: AssetMeta;
     readonly stream: Readable;
     unlink(): Promise<string>;
-    setMeta(meta: Partial<IAssetMeta>): Promise<any>;
+    setMeta(meta: Partial<AssetMeta>): Promise<any>;
     getBuffer(): Promise<Buffer>;
-    download(metadata?: IAssetMeta): Promise<Readable>;
+    download(metadata?: AssetMeta): Promise<Readable>;
     downloadImage(
-        params?: IImageParams,
-        metadata?: IAssetMeta,
+        params?: ImageParams,
+        metadata?: AssetMeta,
     ): Promise<Readable>;
-    getImage(params?: IImageParams): Promise<Readable>;
+    getImage(params?: ImageParams): Promise<Readable>;
     save(): Promise<any>;
     load(): Promise<this>;
     toJSON(): any;
 }
 
-export interface IAssetUploadStream extends Writable {
+export interface AssetUploadStream extends Writable {
     id?: ObjectId;
     done?: boolean;
     length?: number;
 }
 
-export interface IAssetUploadOpts {
+export interface AssetUploadOpts {
     chunkSizeBytes?: number;
     contentType?: string;
-    metadata?: IAssetMeta;
+    metadata?: AssetMeta;
 }
 
-export interface IAssetDriver {
+export interface AssetDriver {
     openUploadStream(
         filename: string,
-        opts?: IAssetUploadOpts,
-    ): IAssetUploadStream;
+        opts?: AssetUploadOpts,
+    ): AssetUploadStream;
     openDownloadStream(id: ObjectId): Readable;
     delete(id: ObjectId): Promise<void>;
 }
 
-export interface IAssetTypeDetector {
+export interface AssetTypeDetector {
     detect(buffer: Buffer): Promise<FileTypeResult>;
 }
 
-export interface IAssetProcessor {
+export interface AssetProcessor {
     process(
-        file: IUploadedFile,
-        metadata: IAssetMeta,
+        file: FileInfo,
+        metadata: AssetMeta,
         fileType: FileTypeResult,
-    ): Promise<IUploadedFile>;
+    ): Promise<FileInfo>;
     preview(
-        file: IUploadedFile,
-        metadata: IAssetMeta,
+        file: FileInfo,
+        metadata: AssetMeta,
         fileType: FileTypeResult,
     ): Promise<Buffer>;
 }
 
-export interface IAssetModuleOpts {
+export interface AssetModuleOpts {
     // Local directory used to store files into when using AssetsLocalDriver
     localDir?: string;
     // Max file size in bytes
     maxSize?: number;
     // Type of asset driver
-    driver?: Type<IAssetDriver>;
+    driver?: Type<AssetDriver>;
     // Type of asset type detector
-    typeDetector?: Type<IAssetTypeDetector>;
+    typeDetector?: Type<AssetTypeDetector>;
     // Type of asset processor
-    assetProcessor?: Type<IAssetProcessor>;
+    assetProcessor?: Type<AssetProcessor>;
 }
 
 export const imageTypes = [
@@ -193,16 +193,16 @@ export const MAX_FILE_SIZE: FactoryToken<number> = Symbol.for(
 
 export const LOCAL_DIR: FactoryToken<string> = Symbol.for('ASSET_LOCAL_DIR');
 
-export const ASSET_DRIVER: FactoryToken<IAssetDriver> =
+export const ASSET_DRIVER: FactoryToken<AssetDriver> =
     Symbol.for('ASSET_DRIVER');
 
-export const ASSET_TYPE_DETECTOR: FactoryToken<IAssetTypeDetector> = Symbol.for(
+export const ASSET_TYPE_DETECTOR: FactoryToken<AssetTypeDetector> = Symbol.for(
     'ASSET_TYPE_DETECTOR',
 );
 
-export const ASSET_PROCESSOR: FactoryToken<IAssetProcessor> =
+export const ASSET_PROCESSOR: FactoryToken<AssetProcessor> =
     Symbol.for('ASSET_PROCESSOR');
 
-export const ASSET_MODULE_OPTIONS: FactoryToken<IAssetModuleOpts> = Symbol.for(
+export const ASSET_MODULE_OPTIONS: FactoryToken<AssetModuleOpts> = Symbol.for(
     'ASSET_MODULE_OPTIONS',
 );

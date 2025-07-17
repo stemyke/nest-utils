@@ -2,5 +2,5 @@ export { TemplatesService } from './templates.service';
 export { TemplatesModule } from './templates.module';
 
 export {
-    ITemplatesModuleOpts
+    TemplatesModuleOpts
 } from './common';

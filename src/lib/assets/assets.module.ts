@@ -1,7 +1,7 @@
 import { DynamicModule, Module, Provider } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
-import { IModuleOptionsProvider } from '../common-types';
+import { ModuleOptionsProvider } from '../common-types';
 import {
     createRootModule,
     createRootModuleAsync,
@@ -13,7 +13,7 @@ import {
     ASSET_MODULE_OPTIONS,
     ASSET_PROCESSOR,
     ASSET_TYPE_DETECTOR,
-    IAssetModuleOpts,
+    AssetModuleOpts,
     LOCAL_DIR,
     MAX_FILE_SIZE,
 } from './common';
@@ -61,7 +61,7 @@ function createProviders(extraProviders?: Provider[]): Provider[] {
 })
 export class AssetsModule {
 
-    static forRoot(opts?: IAssetModuleOpts): DynamicModule {
+    static forRoot(opts?: AssetModuleOpts): DynamicModule {
         return createRootModule(
             AssetsModule,
             ASSET_MODULE_OPTIONS,
@@ -70,7 +70,7 @@ export class AssetsModule {
         )
     }
 
-    static forRootAsync(opts: IModuleOptionsProvider<IAssetModuleOpts>,
+    static forRootAsync(opts: ModuleOptionsProvider<AssetModuleOpts>,
                         ...extraProviders: Provider[]): DynamicModule {
         return createRootModuleAsync(
             AssetsModule,

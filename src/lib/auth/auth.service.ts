@@ -1,23 +1,23 @@
 import { forwardRef, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
-    IAuthContext,
-    IJwtPayload, IJwtResponse,
-    IUser,
-    IUserHandler,
+    AuthContext,
+    JwtPayload, JwtResponse,
+    AuthUser,
+    UserHandler,
     USER_HANDLER
 } from './common';
 import { isFunction } from '../utils';
 
 @Injectable()
 export class AuthService {
-    constructor(protected jwt: JwtService, @Inject(USER_HANDLER) protected users: IUserHandler) {
+    constructor(protected jwt: JwtService, @Inject(USER_HANDLER) protected users: UserHandler) {
     }
 
     async validate(
         credential: string,
         password: string
-    ): Promise<IAuthContext> {
+    ): Promise<AuthContext> {
         const ctx = await this.users.findByCredentials(credential, password);
         if (!ctx) {
             throw new UnauthorizedException();
@@ -25,7 +25,7 @@ export class AuthService {
         return ctx;
     }
 
-    async byId(id: string): Promise<IAuthContext> {
+    async byId(id: string): Promise<AuthContext> {
         const ctx = await this.users.findById(id);
         if (!ctx) {
             throw new UnauthorizedException();
@@ -33,8 +33,8 @@ export class AuthService {
         return ctx;
     }
 
-    login(ctx: IAuthContext): IJwtResponse {
-        const payload: IJwtPayload = {
+    login(ctx: AuthContext): JwtResponse {
+        const payload: JwtPayload = {
             id: ctx.context.id
         };
         return {
@@ -43,11 +43,11 @@ export class AuthService {
         };
     }
 
-    async impersonate(ctx: IAuthContext, target: string): Promise<IJwtResponse> {
+    async impersonate(ctx: AuthContext, target: string): Promise<JwtResponse> {
         const impersonated = await this.byId(target);
         const impersonator = ctx.impersonator || ctx;
         impersonated.impersonator = impersonator;
-        const payload: IJwtPayload = {
+        const payload: JwtPayload = {
             id: impersonated.context.id,
             impersonator: impersonator.context.id
         };
@@ -57,9 +57,9 @@ export class AuthService {
         };
     }
 
-    async endImpersonate(ctx: IAuthContext): Promise<IJwtResponse> {
+    async endImpersonate(ctx: AuthContext): Promise<JwtResponse> {
         const target = ctx.impersonator || ctx;
-        const payload: IJwtPayload = {
+        const payload: JwtPayload = {
             id: target.context.id
         };
         delete target['impersonator'];
@@ -69,7 +69,7 @@ export class AuthService {
         };
     }
 
-    response(ctx: IAuthContext): Record<string, any> {
+    response(ctx: AuthContext): Record<string, any> {
         const user: Record<string, any> = isFunction(ctx.user.toJSON) ? ctx.user.toJSON() : Object.assign({}, ctx.user);
         Object.assign(user, ctx.context);
         if (ctx.impersonator) {

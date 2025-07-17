@@ -13,11 +13,11 @@ import {
 } from 'mongoose/lib/utils';
 
 import {
-    IMatchField,
-    IPagination,
-    IPaginationParams,
-    IProjectOptions,
-    IUnwindOptions,
+    MatchField,
+    PaginationData,
+    PaginationParams,
+    ProjectOptions,
+    UnwindOptions,
 } from '../common-types';
 import { isFunction, isObject, isString } from './misc';
 import { escapeRegex, toKeywords } from './string';
@@ -94,7 +94,7 @@ export function hydratePopulated<T extends HydratedDocument<any>>(model: Model<T
  * @param where Simple query to filter the results
  * @param params Pagination params
  */
-export async function paginate<T>(model: Model<T>, where: FilterQuery<HydratedDocument<T>>, params: IPaginationParams<T>): Promise<IPagination<HydratedDocument<T>>> {
+export async function paginate<T>(model: Model<T>, where: FilterQuery<HydratedDocument<T>>, params: PaginationParams<T>): Promise<PaginationData<HydratedDocument<T>>> {
     const count = await model.countDocuments(where);
     let query: Query<any, any> = model.find(where);
     if (isString(params.sort) && params.sort) {
@@ -123,7 +123,7 @@ export async function paginate<T>(model: Model<T>, where: FilterQuery<HydratedDo
  * @param params Pagination params
  * @param metaProjection Pagination params
  */
-export async function paginateAggregations<T>(model: Model<T>, aggregations: PipelineStage[], params: IPaginationParams<T>, metaProjection: any = {}): Promise<IPagination<HydratedDocument<T>>> {
+export async function paginateAggregations<T>(model: Model<T>, aggregations: PipelineStage[], params: PaginationParams<T>, metaProjection: any = {}): Promise<PaginationData<HydratedDocument<T>>> {
     const sortField = !isString(params.sort) || !params.sort ? null : (params.sort.startsWith('-') ? params.sort.substring(1) : params.sort);
     const sortAggregation: PipelineStage.Sort[] = !sortField ? [] : [{
         $sort: {[sortField]: sortField == params.sort ? 1 : -1}
@@ -149,7 +149,7 @@ export async function paginateAggregations<T>(model: Model<T>, aggregations: Pip
             }
         }
     ]);
-    const pagination = result[0] as IPagination<HydratedDocument<T>>;
+    const pagination = result[0] as PaginationData<HydratedDocument<T>>;
     if (!pagination) {
         return {items: [], count: 0, meta: {total: 0}};
     }
@@ -193,11 +193,11 @@ export function matchStage(match: FilterQuery<any>): PipelineStage.Match {
     return {$match: match};
 }
 
-export function matchField(field: string, filter: any, when: boolean): IMatchField {
+export function matchField(field: string, filter: any, when: boolean): MatchField {
     return {field, filter, when};
 }
 
-export function matchFieldStages(...fields: IMatchField[]): ReadonlyArray<PipelineStage.Match> {
+export function matchFieldStages(...fields: MatchField[]): ReadonlyArray<PipelineStage.Match> {
     const match = {};
     fields.forEach(field => {
         if (field.when) {
@@ -207,15 +207,15 @@ export function matchFieldStages(...fields: IMatchField[]): ReadonlyArray<Pipeli
     return Object.keys(match).length > 0 ? [matchStage(match)] : [];
 }
 
-export function projectStage(fields: IProjectOptions): PipelineStage.Project {
+export function projectStage(fields: ProjectOptions): PipelineStage.Project {
     return {$project: fields};
 }
 
-export function addFieldStage(fields: IProjectOptions): PipelineStage.AddFields {
+export function addFieldStage(fields: ProjectOptions): PipelineStage.AddFields {
     return {$addFields: fields};
 }
 
-export function unwindStage(fieldOrOpts: string | IUnwindOptions): PipelineStage.Unwind {
+export function unwindStage(fieldOrOpts: string | UnwindOptions): PipelineStage.Unwind {
     return {$unwind: fieldOrOpts};
 }
 

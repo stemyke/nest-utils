@@ -2,10 +2,10 @@ import { Inject, Injectable } from '@nestjs/common';
 import { resolve } from 'path';
 import { readdir, readFile, stat } from 'fs/promises';
 
-import { IDictionaryProvider, TRANSLATIONS_PATH } from './common';
+import { DictionaryProvider, TRANSLATIONS_PATH } from './common';
 
 @Injectable()
-export class FsDictionaryProvider implements IDictionaryProvider {
+export class FsDictionaryProvider implements DictionaryProvider {
 
     constructor(@Inject(TRANSLATIONS_PATH) protected path: string) {
 

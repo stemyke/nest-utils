@@ -2,7 +2,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { DynamicModule, Module, Provider } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 
-import { IModuleOptionsProvider } from '../common-types';
+import { ModuleOptionsProvider } from '../common-types';
 import {
     createRootModule,
     createRootModuleAsync,
@@ -11,7 +11,7 @@ import {
 
 import {
     AUTH_MODULE_OPTIONS,
-    IAuthModuleOpts,
+    AuthModuleOpts,
     JWT_SECRET,
     USER_HANDLER,
 } from './common';
@@ -56,7 +56,7 @@ function createProviders(): Provider[] {
 })
 export class AuthModule {
 
-    static forRoot(opts?: IAuthModuleOpts): DynamicModule {
+    static forRoot(opts?: AuthModuleOpts): DynamicModule {
         return createRootModule(
             AuthModule,
             AUTH_MODULE_OPTIONS,
@@ -65,7 +65,7 @@ export class AuthModule {
         );
     }
 
-    static forRootAsync(opts: IModuleOptionsProvider<IAuthModuleOpts>): DynamicModule {
+    static forRootAsync(opts: ModuleOptionsProvider<AuthModuleOpts>): DynamicModule {
         return createRootModuleAsync(
             AuthModule,
             AUTH_MODULE_OPTIONS,

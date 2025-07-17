@@ -8,17 +8,17 @@ import { AnyExpression, Expression, Types } from 'mongoose';
 
 // --- Mongo interfaces and types
 
-export interface IMatchField {
+export interface MatchField {
     field: string;
     filter: any;
     when: boolean;
 }
 
-export interface IProjectOptions {
-    [field: string]: AnyExpression | Expression | IProjectOptions;
+export interface ProjectOptions {
+    [field: string]: AnyExpression | Expression | ProjectOptions;
 }
 
-export interface IUnwindOptions {
+export interface UnwindOptions {
     path: string;
     includeArrayIndex?: string;
     preserveNullAndEmptyArrays?: boolean;
@@ -57,7 +57,7 @@ export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>
 
 // --- Pagination ---
 
-export interface IPaginationParams<T> {
+export interface PaginationParams<T> {
     page: number;
     limit: number;
     sort?: string;
@@ -65,36 +65,36 @@ export interface IPaginationParams<T> {
     [key: string]: any;
 }
 
-export interface IPaginationMeta {
+export interface PaginationMeta {
     total: number;
     [key: string]: any;
 }
 
-export interface IPagination<T = any> {
+export interface PaginationData<T = any> {
     count: number
     items: T[];
-    meta?: IPaginationMeta;
+    meta?: PaginationMeta;
 }
 
 // --- Assets ---
 
-export interface IImageCropInfo {
+export interface ImageCropInfo {
     x: number;
     y: number;
     w: number;
     h: number;
 }
 
-export interface IImageMeta {
+export interface ImageMeta {
     extension?: string;
-    crop?: IImageCropInfo;
-    cropBefore?: IImageCropInfo;
-    cropAfter?: IImageCropInfo;
+    crop?: ImageCropInfo;
+    cropBefore?: ImageCropInfo;
+    cropAfter?: ImageCropInfo;
     canvasScaleX?: number;
     canvasScaleY?: number;
 }
 
-export interface IImageParams {
+export interface ImageParams {
     rotation?: number;
     canvasScaleX?: number;
     canvasScaleY?: number;
@@ -102,29 +102,40 @@ export interface IImageParams {
     scaleY?: number;
     lazy?: boolean;
     crop?: string | boolean;
-    cropBefore?: string | boolean | IImageCropInfo;
-    cropAfter?: string | boolean | IImageCropInfo;
+    cropBefore?: string | boolean | ImageCropInfo;
+    cropAfter?: string | boolean | ImageCropInfo;
     [key: string]: any;
 }
 
 export type FontFormat = "opentype" | "truetype" | "woff" | "woff2" | "datafork";
 
+// --- Fixtures ---
+
+export interface Fixture {
+    load(output?: FixtureOutput): Promise<any>;
+}
+
+export interface FixtureOutput {
+    write(message: string): void;
+    writeln(message: string): void;
+}
+
 // --- Translations ---
 
-export interface ITranslator {
+export interface Translator {
     getDictionary(lang: string): Promise<void>;
     getTranslationSync(lang: string, key: string, params?: Record<string, any>): string;
 }
 
 // --- Module configuration ---
 
-export interface IModuleOptionsFactory<T> {
+export interface ModuleOptionsFactory<T> {
     createOptions(): Promise<T> | T;
 }
 
-export interface IModuleOptionsProvider<T extends AsyncOptions> {
-    useExisting?: Type<IModuleOptionsFactory<T>>;
-    useClass?: Type<IModuleOptionsFactory<T>>;
+export interface ModuleOptionsProvider<T extends AsyncOptions> {
+    useExisting?: Type<ModuleOptionsFactory<T>>;
+    useClass?: Type<ModuleOptionsFactory<T>>;
     useFactory?: (...args: any[]) => Promise<T> | T;
     inject?: any[];
 }
@@ -134,7 +145,7 @@ export type AsyncOptions = Record<string, any>;
 export type AsyncOptionsProvider<T extends AsyncOptions> = FactoryProvider<T>;
 
 export type AsyncOptionsTypeProvider<T extends AsyncOptions> =
-    ExistingProvider<IModuleOptionsFactory<T>> | ClassProvider<IModuleOptionsFactory<T>>;
+    ExistingProvider<ModuleOptionsFactory<T>> | ClassProvider<ModuleOptionsFactory<T>>;
 
 export type AsyncProviders<T extends AsyncOptions> =
     [AsyncOptionsProvider<T>] | [AsyncOptionsProvider<T>, AsyncOptionsTypeProvider<T>];

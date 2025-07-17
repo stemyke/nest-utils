@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 
-import { ITranslator } from '../common-types';
+import { Translator } from '../common-types';
 import { getValue, interpolate, isString } from '../utils';
 
 
 @Injectable()
-export class StaticTranslator implements ITranslator {
+export class StaticTranslator implements Translator {
 
     protected dictionaries: { [lang: string]: Record<string, string> };
 

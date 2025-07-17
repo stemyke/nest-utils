@@ -7,7 +7,7 @@ import { basename, dirname, join } from 'path';
 import { randomUUID } from 'crypto';
 import got from 'got';
 import ffmpeg, { FfprobeStream } from 'fluent-ffmpeg';
-import { IImageCropInfo, IImageMeta, IImageParams } from '../common-types';
+import { ImageCropInfo, ImageMeta, ImageParams } from '../common-types';
 import { isBoolean, isInterface, isString } from './misc';
 import type { Region } from 'sharp';
 import sharp_ from 'sharp';
@@ -112,8 +112,8 @@ const cropInterface = {
     h: 'number',
 };
 
-function toCropRegion(cropInfo: string | boolean | IImageCropInfo): Region {
-    let crop = cropInfo as IImageCropInfo;
+function toCropRegion(cropInfo: string | boolean | ImageCropInfo): Region {
+    let crop = cropInfo as ImageCropInfo;
     if (isString(cropInfo)) {
         try {
             crop = JSON.parse(cropInfo as string);
@@ -132,8 +132,8 @@ function toCropRegion(cropInfo: string | boolean | IImageCropInfo): Region {
 
 export async function toImage<T = Buffer | Readable>(
     src: T,
-    params?: IImageParams,
-    meta?: IImageMeta,
+    params?: ImageParams,
+    meta?: ImageMeta,
 ): Promise<T> {
     // Default params and meta
     params = params || {};

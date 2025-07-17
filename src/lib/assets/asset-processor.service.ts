@@ -7,10 +7,10 @@ import { FontFormat } from '../common-types';
 import {
     fontProps,
     fontTypes,
-    IAssetMeta,
-    IAssetProcessor,
+    AssetMeta,
+    AssetProcessor,
     imageTypes,
-    IUploadedFile,
+    FileInfo,
     videoTypes,
 } from './common';
 import { ffprobe, generateVideoThumbnail, streamToBuffer } from '../utils';
@@ -20,7 +20,7 @@ const sharp = sharp_;
 const fontKit = fontKit_;
 
 @Injectable()
-export class AssetProcessorService implements IAssetProcessor {
+export class AssetProcessorService implements AssetProcessor {
     static extractFontFormat(font: Font): FontFormat {
         const name: string = font.constructor.name;
         const tag: string = font['directory'].tag;
@@ -42,10 +42,10 @@ export class AssetProcessorService implements IAssetProcessor {
     }
 
     static async copyImageMeta(
-        file: IUploadedFile,
-        metadata: IAssetMeta,
+        file: FileInfo,
+        metadata: AssetMeta,
         fileType: FileTypeResult,
-    ): Promise<IUploadedFile> {
+    ): Promise<FileInfo> {
         if (fileType.mime === 'image/svg+xml') {
             const content = await readFile(file.path, 'utf8');
             const match = /<svg([^<>]+)>/gi.exec(content);
@@ -92,9 +92,9 @@ export class AssetProcessorService implements IAssetProcessor {
     }
 
     static async copyVideoMeta(
-        file: IUploadedFile,
-        metadata: IAssetMeta,
-    ): Promise<IUploadedFile> {
+        file: FileInfo,
+        metadata: AssetMeta,
+    ): Promise<FileInfo> {
         const info = await ffprobe(file.path);
         Object.assign(metadata, info);
         return file;
@@ -105,9 +105,9 @@ export class AssetProcessorService implements IAssetProcessor {
     }
 
     static async copyFontMeta(
-        file: IUploadedFile,
-        metadata: IAssetMeta,
-    ): Promise<IUploadedFile> {
+        file: FileInfo,
+        metadata: AssetMeta,
+    ): Promise<FileInfo> {
         const font = (await fontKit.open(file.path)) as Font;
         metadata.format = AssetProcessorService.extractFontFormat(font);
         fontProps.forEach((prop) => {
@@ -117,10 +117,10 @@ export class AssetProcessorService implements IAssetProcessor {
     }
 
     async process(
-        file: IUploadedFile,
-        metadata: IAssetMeta,
+        file: FileInfo,
+        metadata: AssetMeta,
         fileType: FileTypeResult,
-    ): Promise<IUploadedFile> {
+    ): Promise<FileInfo> {
         if (AssetProcessorService.isImage(fileType.mime)) {
             return await AssetProcessorService.copyImageMeta(
                 file,
@@ -138,8 +138,8 @@ export class AssetProcessorService implements IAssetProcessor {
     }
 
     async preview(
-        file: IUploadedFile,
-        metadata: IAssetMeta,
+        file: FileInfo,
+        metadata: AssetMeta,
         fileType: FileTypeResult,
     ): Promise<Buffer> {
         if (AssetProcessorService.isVideo(fileType.mime)) {

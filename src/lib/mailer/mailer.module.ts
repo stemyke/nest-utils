@@ -1,6 +1,6 @@
 import { DynamicModule, Module, Provider } from '@nestjs/common';
 
-import { IModuleOptionsProvider } from '../common-types';
+import { ModuleOptionsProvider } from '../common-types';
 import {
     createRootModule,
     createRootModuleAsync,
@@ -39,7 +39,7 @@ export class MailerModule {
     }
 
     static forRootAsync(
-        opts: IModuleOptionsProvider<MailerModuleOpts>
+        opts: ModuleOptionsProvider<MailerModuleOpts>
     ): DynamicModule {
         return createRootModuleAsync(
             MailerModule,

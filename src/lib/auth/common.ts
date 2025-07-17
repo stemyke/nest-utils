@@ -1,11 +1,11 @@
 import { Type } from '@nestjs/common';
-import { FactoryToken, ITranslator } from '../common-types';
+import { FactoryToken } from '../common-types';
 
 /**
  * Base user interface
  */
-export interface IUser {
-    // Users username
+export interface AuthUser {
+    // User's username
     username: string;
     // Optional expire date that can be checked on login and used when generating JWT token
     expireDate?: Date;
@@ -16,7 +16,7 @@ export interface IUser {
 /**
  * Calculated user context that can depend on any scenario
  */
-export interface IUserContext {
+export interface UserContext {
     // Context id
     id: string;
     // Available user roles
@@ -28,39 +28,39 @@ export interface IUserContext {
 /**
  * Calculated auth context that contains the user and its context
  */
-export interface IAuthContext {
-    user: IUser;
-    context: IUserContext;
+export interface AuthContext {
+    user: AuthUser;
+    context: UserContext;
     impersonator?: {
-        user: IUser;
-        context: IUserContext;
+        user: AuthUser;
+        context: UserContext;
     }
 }
 
 /**
  * User handler interface
  */
-export interface IUserHandler {
-    findByCredentials(credential: string, password: string): Promise<IAuthContext>;
-    findById(id: string): Promise<IAuthContext>;
+export interface UserHandler {
+    findByCredentials(credential: string, password: string): Promise<AuthContext>;
+    findById(id: string): Promise<AuthContext>;
 }
 
-export interface IJwtPayload {
+export interface JwtPayload {
     id: string;
     impersonator?: string;
 }
 
-export interface IJwtResponse {
+export interface JwtResponse {
     token: string;
     user: Record<string, any>;
 }
 
-export interface IAuthModuleOpts {
+export interface AuthModuleOpts {
     jwtSecret?: string;
-    userHandler?: Type<IUserHandler>;
+    userHandler?: Type<UserHandler>;
 }
 
 export const JWT_SECRET: FactoryToken<string> = Symbol.for('JWT_SECRET');
-export const USER_HANDLER: FactoryToken<IUserHandler> = Symbol.for('USER_HANDLER');
-export const AUTH_MODULE_OPTIONS: FactoryToken<IAuthModuleOpts> =
+export const USER_HANDLER: FactoryToken<UserHandler> = Symbol.for('USER_HANDLER');
+export const AUTH_MODULE_OPTIONS: FactoryToken<AuthModuleOpts> =
     Symbol.for('AUTH_MODULE_OPTIONS');

@@ -5,24 +5,24 @@ import { Types } from 'mongoose';
 import { Inject, Injectable } from '@nestjs/common';
 
 import {
-    IAssetDriver,
-    IAssetUploadOpts,
-    IAssetUploadStream,
+    AssetDriver,
+    AssetUploadOpts,
+    AssetUploadStream,
     LOCAL_DIR,
 } from '../common';
 
 @Injectable()
-export class AssetLocalDriver implements IAssetDriver {
+export class AssetLocalDriver implements AssetDriver {
     constructor(@Inject(LOCAL_DIR) protected dir: string) {}
 
-    openUploadStream(filename: string, opts?: IAssetUploadOpts) {
+    openUploadStream(filename: string, opts?: AssetUploadOpts) {
         const id = new Types.ObjectId();
         const dir = `${this.dir}/${id.toHexString()}`;
         mkdirSync(dir, { recursive: true });
         const ws = createWriteStream(
             `${dir}/file.bin`
         );
-        const stream = ws as IAssetUploadStream;
+        const stream = ws as AssetUploadStream;
         stream.id = id;
         stream.done = false;
         stream.on('finish', () => {

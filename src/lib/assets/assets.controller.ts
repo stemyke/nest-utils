@@ -23,11 +23,11 @@ import { formatSize } from '../utils';
 
 import {
     ASSET_PROCESSOR,
-    IAsset,
-    IAssetMeta,
-    IAssetProcessor,
-    IUploadedFile,
-    IUploadFromUrlBody,
+    Asset,
+    AssetMeta,
+    AssetProcessor,
+    FileInfo,
+    UploadFromUrlBody,
     MAX_FILE_SIZE,
 } from './common';
 import { AssetImageParams } from './asset-image-params';
@@ -44,14 +44,14 @@ type AssetReqType = 'Image' | 'Preview' | 'Asset';
 export class AssetsController {
     constructor(
         @Inject(MAX_FILE_SIZE) readonly maxFileSize: number,
-        @Inject(ASSET_PROCESSOR) readonly assetProcessor: IAssetProcessor,
+        @Inject(ASSET_PROCESSOR) readonly assetProcessor: AssetProcessor,
         readonly assets: AssetsService,
         readonly assetResolver: AssetResolverService
     ) {}
 
     @Post('')
     @UseInterceptors(FileInterceptor('file', {storage: diskStorage({})}))
-    async upload(@UploadedFile('file') file: IUploadedFile) {
+    async upload(@UploadedFile('file') file: FileInfo) {
         try {
             if (file.size > this.maxFileSize) {
                 throw new Error(
@@ -60,7 +60,7 @@ export class AssetsController {
                     )}' by: ${formatSize(file.size - this.maxFileSize)}`
                 );
             }
-            const meta = { filename: file.filename } as IAssetMeta;
+            const meta = { filename: file.filename } as AssetMeta;
             const fileType: FileTypeResult = {
                 ext: file.originalname.split('.').pop(),
                 mime: file.mimetype
@@ -76,7 +76,7 @@ export class AssetsController {
     }
 
     @Post('url')
-    async uploadUrl(@Body() body: IUploadFromUrlBody) {
+    async uploadUrl(@Body() body: UploadFromUrlBody) {
         try {
             const asset = await this.assets.writeUrl(body.url, body);
             return asset.toJSON();
@@ -149,7 +149,7 @@ export class AssetsController {
         type: AssetReqType,
         id: string,
         lazy: boolean
-    ): Promise<IAsset> {
+    ): Promise<Asset> {
         if (!isValidObjectId(id)) {
             throw new BadRequestException(`Invalid object id provided: ${id}`);
         }
@@ -165,7 +165,7 @@ export class AssetsController {
     protected async getAssetByName(
         type: AssetReqType,
         filename: string
-    ): Promise<IAsset> {
+    ): Promise<Asset> {
         const asset = await this.assets.find({ filename });
         if (!asset) {
             throw new NotFoundException(
@@ -177,8 +177,8 @@ export class AssetsController {
 
     protected async resolveFinalAsset(
         type: AssetReqType,
-        asset: IAsset
-    ): Promise<IAsset> {
+        asset: Asset
+    ): Promise<Asset> {
         if (asset.metadata?.classified) {
             throw new ForbiddenException(
                 `${type} is classified, and can be only downloaded from a custom url.`
@@ -195,7 +195,7 @@ export class AssetsController {
 
     protected async streamResponse(
         promise: Promise<Readable>,
-        asset: IAsset
+        asset: Asset
     ): Promise<StreamableFile> {
         const stream = await promise;
         const ext = asset.metadata?.extension;
@@ -208,7 +208,7 @@ export class AssetsController {
         });
     }
 
-    protected async generatePreview(file: IUploadedFile, metadata: IAssetMeta, fileType: FileTypeResult): Promise<void> {
+    protected async generatePreview(file: FileInfo, metadata: AssetMeta, fileType: FileTypeResult): Promise<void> {
         const preview = await this.assetProcessor.preview(file, metadata, fileType);
         if (!preview) return;
         const asset = await this.assets.writeBuffer(preview);

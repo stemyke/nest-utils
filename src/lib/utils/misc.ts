@@ -11,8 +11,8 @@ import {
     Constructor,
     FactoryToken,
     FromOptionsFactory,
-    IModuleOptionsFactory,
-    IModuleOptionsProvider,
+    ModuleOptionsFactory,
+    ModuleOptionsProvider,
 } from '../common-types';
 
 export function isNullOrUndefined(value: any): boolean {
@@ -160,7 +160,7 @@ export function getEOL(text: string): string {
 }
 
 function createAsyncOptionsProvider<T extends AsyncOptions>(
-    token: InjectionToken, opts: IModuleOptionsProvider<T>
+    token: InjectionToken, opts: ModuleOptionsProvider<T>
 ): AsyncOptionsProvider<T> {
     if (opts.useFactory) {
         return {
@@ -174,13 +174,13 @@ function createAsyncOptionsProvider<T extends AsyncOptions>(
     ];
     return {
         provide: token,
-        useFactory: async (factory: IModuleOptionsFactory<T>) => await factory.createOptions(),
+        useFactory: async (factory: ModuleOptionsFactory<T>) => await factory.createOptions(),
         inject,
     };
 }
 
 export function createAsyncProviders<T extends AsyncOptions>(
-    token: InjectionToken<T>, opts: IModuleOptionsProvider<T>
+    token: InjectionToken<T>, opts: ModuleOptionsProvider<T>
 ): AsyncProviders<T> {
     if (opts.useExisting || opts.useFactory) {
         return [createAsyncOptionsProvider(token, opts)];
@@ -221,16 +221,18 @@ export class FromOptionsProviders<O extends AsyncOptions> {
             provide,
             useFactory: async (opts: O, moduleRef: ModuleRef) => {
                 const type = await factory(opts);
-                try {
-                    // Try to use internal API-s
-                    const link = moduleRef['instanceLinksHost'].get(type);
-                    await link.wrapperRef.settlementSignal['settledPromise'];
-                } catch (e) {
-                    // Magic timeout
-                    console.log('Using magic timeout', e);
-                    await promiseTimeout(50);
-                }
-                return moduleRef.resolve(type, null, {strict: false});
+                return this.resolveType(type, moduleRef);
+            },
+            inject: [this.token, ModuleRef]
+        });
+    }
+
+    useTypes<T>(provide: FactoryToken<T>, factory: FromOptionsFactory<O, ReadonlyArray<Type<T>>>) {
+        return this.add({
+            provide,
+            useFactory: async (opts: O, moduleRef: ModuleRef) => {
+                const types = await factory(opts);
+                return Promise.all(types.map(type => this.resolveType(type, moduleRef)));
             },
             inject: [this.token, ModuleRef]
         });
@@ -238,6 +240,19 @@ export class FromOptionsProviders<O extends AsyncOptions> {
 
     asArray(): Provider[] {
         return [...this.providers];
+    }
+
+    protected async resolveType<T>(type: Type<T>, moduleRef: ModuleRef): Promise<T> {
+        try {
+            // Try to use internal API-s
+            const link = moduleRef['instanceLinksHost'].get(type);
+            await link.wrapperRef.settlementSignal['settledPromise'];
+        } catch (e) {
+            // Magic timeout
+            console.log('Using magic timeout', e);
+            await promiseTimeout(50);
+        }
+        return moduleRef.resolve(type, null, {strict: false});
     }
 }
 
@@ -265,7 +280,7 @@ export function createRootModule<O extends AsyncOptions, M extends Constructor<a
 export function createRootModuleAsync<O extends AsyncOptions, M extends Type>(
     module: M,
     token: FactoryToken<O>,
-    opts: IModuleOptionsProvider<O>,
+    opts: ModuleOptionsProvider<O>,
     providers: Provider[],
     global: boolean = true
 ): DynamicModule {

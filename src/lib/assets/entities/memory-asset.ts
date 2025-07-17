@@ -2,11 +2,11 @@ import { Readable } from 'stream';
 import { Buffer } from 'buffer';
 import type { ObjectId } from 'mongodb';
 import { Types } from 'mongoose';
-import { IImageParams } from '../../common-types';
+import { ImageParams } from '../../common-types';
 import { bufferToStream, streamToBuffer, toImage } from '../../utils';
-import { IAsset, IAssetMeta } from '../common';
+import { Asset, AssetMeta } from '../common';
 
-export class TempAsset implements IAsset {
+export class MemoryAsset implements Asset {
 
     readonly oid: ObjectId;
     readonly id: string;
@@ -15,7 +15,7 @@ export class TempAsset implements IAsset {
 
     protected buffer: Buffer;
 
-    constructor(src: Readable | Buffer, readonly filename: string, readonly contentType: string, readonly metadata: IAssetMeta) {
+    constructor(src: Readable | Buffer, readonly filename: string, readonly contentType: string, readonly metadata: AssetMeta) {
         this.oid = new Types.ObjectId();
         this.id = this.oid.toHexString();
         this.createdAt = new Date();
@@ -28,7 +28,7 @@ export class TempAsset implements IAsset {
         throw new Error(`Temp asset '${this.id}' can not be removed!`);
     }
 
-    async setMeta(meta: Partial<IAssetMeta>): Promise<any> {
+    async setMeta(meta: Partial<AssetMeta>): Promise<any> {
         Object.assign(this.metadata, meta || {});
     }
 
@@ -37,17 +37,17 @@ export class TempAsset implements IAsset {
         return this.buffer;
     }
 
-    async download(metadata?: IAssetMeta): Promise<Readable> {
+    async download(metadata?: AssetMeta): Promise<Readable> {
         Object.assign(this.metadata, metadata || {});
         return this.stream;
     }
 
-    downloadImage(params?: IImageParams, metadata?: IAssetMeta): Promise<Readable> {
+    downloadImage(params?: ImageParams, metadata?: AssetMeta): Promise<Readable> {
         Object.assign(this.metadata, metadata || {});
         return toImage(this.stream, params, this.metadata);
     }
 
-    getImage(params?: IImageParams): Promise<Readable> {
+    getImage(params?: ImageParams): Promise<Readable> {
         return this.downloadImage(params);
     }
 
