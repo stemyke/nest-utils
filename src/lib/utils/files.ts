@@ -1,9 +1,9 @@
 import { Readable } from 'stream';
 import { tmpdir } from 'os';
 import { Buffer } from 'buffer';
-import { createReadStream, realpathSync } from 'fs';
-import { mkdir, writeFile } from 'fs/promises';
-import { basename, dirname, join } from 'path';
+import { createReadStream, existsSync, realpathSync } from 'fs';
+import { mkdir, writeFile as writeFileFs, copyFile as copyFileFs } from 'fs/promises';
+import { basename, dirname, join, resolve } from 'path';
 import { randomUUID } from 'crypto';
 import got from 'got';
 import ffmpeg, { FfprobeStream } from 'fluent-ffmpeg';
@@ -17,6 +17,12 @@ const sharp = sharp_;
 
 export const tempDirectory = realpathSync(tmpdir());
 
+export const runDirectory = existsSync(resolve('dist'))
+    ? resolve('dist')
+    : resolve('.');
+
+export const publicDirectory = join(runDirectory, 'public');
+
 const fileSizeNames = ['bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
 
 export function formatSize(size: number): string {
@@ -28,21 +34,45 @@ export function formatSize(size: number): string {
     return `${size.toFixed(2)} ${fileSizeNames[index]}`;
 }
 
-export async function tempPath(filePath: string) {
-    const path = join(tempDirectory, randomUUID(), filePath);
-    await mkdir(dirname(path), { recursive: true });
+export function tempPath(...target: string[]) {
+    return join(tempDirectory, randomUUID(), ...target);
+}
+
+export function publicPath(...target: string[]) {
+    return join(publicDirectory, ...target);
+}
+
+export function relativePath(...target: string[]) {
+    return join(runDirectory, ...target);
+}
+
+export async function writeFile(content: Buffer, absolutePath: string) {
+    await mkdir(dirname(absolutePath), { recursive: true });
+    await writeFileFs(absolutePath, content);
+    return absolutePath;
+}
+
+export async function tempWrite(content: Buffer, ...target: string[]) {
+    const path = tempPath(...target);
+    await writeFile(content, path);
     return path;
 }
 
-export async function tempWrite(content: Buffer, filePath: string) {
-    const path = await tempPath(filePath);
-    await writeFile(path, content);
+export async function publicWrite(content: Buffer, ...target: string[]) {
+    const path = publicPath(...target);
+    await writeFile(content, path);
     return path;
+}
+
+export async function copyFile(absoluteFrom: string, absoluteTo: string) {
+    await mkdir(dirname(absoluteTo), { recursive: true });
+    await copyFileFs(absoluteFrom, absoluteTo);
+    return absoluteTo;
 }
 
 export async function generateVideoThumbnail(src: string | Buffer) {
     const input = isString(src) ? src : await tempWrite(src, 'video');
-    const output = await tempPath('thumbnail.png');
+    const output = tempPath('thumbnail.png');
     return new Promise<Readable>((resolve, reject) => {
         ffmpeg(input)
             .on('end', () => {
